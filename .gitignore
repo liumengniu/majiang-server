@@ -1,0 +1,7 @@
+*.idea
+node_modules
+*/back-end
+back-end
+*.clinic
+*/package-lock.json
+*package-lock.json
