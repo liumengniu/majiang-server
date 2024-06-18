@@ -2,12 +2,13 @@
  * @author Kevin
  * @Date: 2024-6-18
  */
-
 const Koa = require("koa");
 const app = new Koa();
 const _ = require('lodash');
 const router = require('./../../routers');
 const bodyParser = require('koa-bodyparser');
+const { sequelize } = require("./../../models");
+const SocketService = require("../socket/SocketService");
 
 const App = {
 	connectServers: [],           //连接服务器的数组
@@ -21,7 +22,7 @@ const App = {
 			this.initSocket();
 			this.initServer();
 			// this.startDoorServer();      // 门服务
-			// this.initDB();
+			this.initDB();
 		} catch (e) {
 			this.onErrorServer(e);
 		}
@@ -50,7 +51,6 @@ const App = {
                 --------------------------------------------------------------------------
             `, process.env.NODE_ENV)
 		);
-		console.log('0000000000000000000000000000000000', process.env.NODE_ENV);
 	},
 	
 	/**
@@ -81,7 +81,7 @@ const App = {
 	 * @returns {Promise<void>}
 	 */
 	initDB: async function () {
-		await sequelize.sync();
+		await sequelize.sync({ force: true });
 	},
 	
 	onErrorServer: async function (e) {

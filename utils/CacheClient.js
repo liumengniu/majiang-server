@@ -87,7 +87,6 @@ class CacheClient {
 		let reply = await this.getAllKey();
 		await this.delKeys(reply);
 		let lastData = await this.getAllKey();
-		console.log(reply, '00000000000000000000000000000000000000000000000000000000000',lastData)
 	}
 	
 	//----------------------------------- zset(主要是做排行榜之类的) --------------------------------------------
