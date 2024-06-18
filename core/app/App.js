@@ -9,6 +9,8 @@ const router = require('./../../routers');
 const bodyParser = require('koa-bodyparser');
 const { sequelize } = require("./../../models");
 const SocketService = require("../socket/SocketService");
+//门
+const DoorServer = require("./GateWayServer");
 
 const App = {
 	connectServers: [],           //连接服务器的数组
@@ -21,7 +23,7 @@ const App = {
 		try {
 			this.initSocket();
 			this.initServer();
-			// this.startDoorServer();      // 门服务
+			this.startDoorServer();      // 门服务
 			this.initDB();
 		} catch (e) {
 			this.onErrorServer(e);
@@ -81,7 +83,8 @@ const App = {
 	 * @returns {Promise<void>}
 	 */
 	initDB: async function () {
-		await sequelize.sync({ force: true });
+		// await sequelize.drop();
+		// await sequelize.sync({ force: true });
 	},
 	
 	onErrorServer: async function (e) {
