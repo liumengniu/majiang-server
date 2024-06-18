@@ -16,4 +16,11 @@ room.post('/createRoom', async ctx =>{
 	const { roomId, userId } = ctx.request.body;
 })
 
+/**
+ * 加入房间
+ */
+room.post('/joinRoom', async ctx =>{
+	const { roomId, userId } = ctx.request.body;
+})
+
 module.exports = room;
