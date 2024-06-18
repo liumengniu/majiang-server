@@ -1,0 +1,29 @@
+{
+  "logmask":"麻将服务端",
+  "preaction":{
+    "script":{
+      "cmd":""
+    }
+  },
+  "services":{
+    "DoorService":{"hosts":{"id":"Door1","ip":"127.0.0.1","port":"4000","custom":{}}},
+    "HallService":{"hosts":{"id":"HallService1","ip":"127.0.0.1","port":"5000","custom":{}}},
+    "GameService":{"hosts":{"id":"GameService1","ip":"127.0.0.1","port":"3000","custom":{}}}
+  },
+  "serverblance":{
+    "HallService":["127.0.0.1:5001","127.0.0.1:5002","127.0.0.1:5003","127.0.0.1:5004"],
+    "GameService":["127.0.0.1:3001","127.0.0.1:3002","127.0.0.1:3003","127.0.0.1:3004"]
+  },
+  "cache":{
+    "type":"redis",
+    "config":{
+      "pass":"123456",
+      "ip":"192.168.1.9",
+      "port":"6379"
+    }
+  },
+  "weixin":{
+    "appid":"wx44b5b8a16b7de1a7",
+    "secret":"2d68d7785f59fe2b5fc664d6d282fb62"
+  }
+}

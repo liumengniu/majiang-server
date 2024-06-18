@@ -6,7 +6,7 @@
 const Koa = require("koa");
 const app = new Koa();
 const _ = require('lodash');
-const router = require('./../../router/index');
+const router = require('./../../routers');
 const bodyParser = require('koa-bodyparser');
 
 const App = {
@@ -20,8 +20,8 @@ const App = {
 		try {
 			this.initSocket();
 			this.initServer();
-			this.startDoorServer();      // 门服务
-			this.initDB();
+			// this.startDoorServer();      // 门服务
+			// this.initDB();
 		} catch (e) {
 			this.onErrorServer(e);
 		}
@@ -53,25 +53,34 @@ const App = {
 		console.log('0000000000000000000000000000000000', process.env.NODE_ENV);
 	},
 	
-	//启动门服务
+	/**
+	 * 启动门服务
+	 */
 	startDoorServer() {
 		const doorServer = DoorServer.getInstance();
 		doorServer.init();
 	},
-	//启动大厅服务
+	/**
+	 * 启动大厅服务
+	 */
 	startHallServer() {
 		const hallServer = HallServer.getInstance();
 		hallServer.init();
 	},
 	
-	//启动长连接服务
+	/**
+	 * 启动长连接服务
+	 * @returns {Promise<void>}
+	 */
 	initSocket: async function () {
 		this.client = SocketService.getInstance();
 		this.client.init();
 	},
-	//初始化数据库
+	/**
+	 * 初始化数据库服务
+	 * @returns {Promise<void>}
+	 */
 	initDB: async function () {
-		// await sequelize.drop();
 		await sequelize.sync();
 	},
 	
