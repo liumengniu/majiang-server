@@ -5,22 +5,68 @@
  */
 
 
-
 const Router = require('koa-router');
+const SocketService = require("../../core/socket/SocketService");
+const RoomService = require("../../core/app/RoomService");
+const Validate = require("../../utils/vlidate");
+const Errors = require("../../utils/api/errors");
+const HttpStatus = require("../../utils/api/httpStatus");
 const room = new Router();
+const _ = require("lodash")
+
+let ws = SocketService.getInstance();
+
 
 /**
  * 创建房间
  */
 room.post('/createRoom', async ctx =>{
-	const { roomId, userId } = ctx.request.body;
+	let { userId } = ctx.request.body;
+	let response;
+	if(!userId){
+		response = Validate.checkSuccess("参数异常", Errors.INVALID_PARAM, HttpStatus.OK, {});
+		ctx.body = response;
+		return;
+	}
+	let roomInfo;
+	try{
+		roomInfo = await RoomService.createRoom(userId);
+		console.log(roomInfo, '+++++++++++++++++++++++++++++++++++++++++++');
+		if(roomInfo){
+			ws.sendToUser(userId,`恭喜创建房间成功，房号${_.get(roomInfo,`${userId}.roomId`)}`,roomInfo, 'create');
+		} else {
+			ws.sendToUser(userId,`恭喜创建房间失败`,roomInfo, 'create');
+		}
+		
+	}catch(e){
+		console.log(e,'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+	}
+	response = Validate.checkSuccess("创建成功", Errors.SUCCESS, HttpStatus.OK, roomInfo);
+	ctx.body = response;
 })
 
 /**
  * 加入房间
  */
-room.post('/joinRoom', async ctx =>{
-	const { roomId, userId } = ctx.request.body;
-})
+room.post("/joinRoom", async ctx =>{
+	let { roomId,userId } = ctx.request.body;
+	let response;
+	if(!userId){
+		response = Validate.checkSuccess("参数异常", Errors.INVALID_PARAM, HttpStatus.OK, {});
+		ctx.body = response;
+		return;
+	}
+	let roomInfo;
+	try{
+		roomInfo = await RoomService.joinRoom(roomId,userId);
+		for(let k in roomInfo){
+			ws.sendToUser(_.get(roomInfo,`${k}.id`),`欢迎用户${userId}加入房间${roomId}`,roomInfo,'join');
+		}
+		response = Validate.checkSuccess("加入成功", Errors.SUCCESS, HttpStatus.OK, roomInfo);
+	}catch(e){
+		response = Validate.checkSuccess(e, Errors.ROOM_NOT_EXIST, HttpStatus.OK, roomInfo);
+	}
+	ctx.body = response;
+});
 
 module.exports = room;

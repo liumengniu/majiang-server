@@ -36,6 +36,7 @@ class SocketService{
             `);
 		let _this = this;
 		this.client.on('connection', function connection(ws, req) {
+			console.log(req,"------------------------",ws)
 			let url = _.get(req, 'url');
 			let params = _.split(url, '=');
 			let id = params[1];
@@ -48,11 +49,10 @@ class SocketService{
 			};
 			_this.sendMessage('连接成功');
 			
-			
 			ws.on('message', async function (message) {
-				console.log(message);
+				console.log(message.toString());
 				console.log('ws.userId', ws.userId);
-				// await _this.onMessageHandle(message, ws.userId);
+				await _this.onMessageHandle(message.toString(), ws.userId);
 			});
 			ws.on('close', async function(e) {
 				let userId = id || ws.userId;
@@ -65,6 +65,7 @@ class SocketService{
 	}
 	//---------------------服务端回调操作--------------------------
 	async onMessageHandle(message, userId){
+		console.log(message, userId, '-----------==============--------------===============')
 		if (message === 'HeartBeat') {
 			console.log('心跳反回了吗');
 			this.sendHeartBeat(userId);
@@ -110,6 +111,10 @@ class SocketService{
 		this.ws.send(data);
 	}
 	
+	/**
+	 * 心跳检测 - 回传
+	 * @param userId
+	 */
 	sendHeartBeat(userId) {
 		this.client.clients.forEach(ws => {
 			if (ws.userId === userId) {
@@ -119,9 +124,11 @@ class SocketService{
 	}
 	//单发消息给单个用户
 	sendToUser(userId, message,data,type){
+		console.log(userId, message,data,type,'-----------------')
 		this.client.clients.forEach(ws => {
+			console.log('-wsws----------------', ws)
 			if (ws.userId === userId) {
-				console.log('推送用户：', this.ws.userId);
+				console.log('推送用户：', ws.userId);
 				ws.send(stringify({message, data,type}));
 			}
 		})
