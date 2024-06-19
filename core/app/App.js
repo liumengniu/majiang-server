@@ -11,6 +11,7 @@ const { sequelize } = require("./../../models");
 const SocketService = require("../socket/SocketService");
 //门
 const DoorServer = require("./GateWayServer");
+const cacheClient = require("../../utils/CacheClient");
 
 const App = {
 	connectServers: [],           //连接服务器的数组
@@ -21,6 +22,8 @@ const App = {
 	client: null,
 	startAllServer: function () {
 		try {
+			this.cleanRedis();
+			this.testRedis();
 			this.initSocket();
 			this.initServer();
 			this.startDoorServer();      // 门服务
@@ -28,6 +31,14 @@ const App = {
 		} catch (e) {
 			this.onErrorServer(e);
 		}
+	},
+	
+	async cleanRedis(){
+		await cacheClient.delAllKeys()
+	},
+	
+	async testRedis(){
+		await cacheClient.testRedis();
 	},
 	
 	

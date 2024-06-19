@@ -88,6 +88,34 @@ class CacheClient {
 		await this.delKeys(reply);
 		let lastData = await this.getAllKey();
 	}
+	async testRedis(){
+		const args = ["myzset", 1, JSON.stringify({a:1,b:2}), 2, "two", 3, "three", 99, "ninety-nine"];
+		const args2 = ["myzset", 33, "thirty-three", 44, "forty-four", 55, "fifty-five"];
+		const max = 99;
+		const min = 1;
+		const offset = 1;
+		const count = 6;
+		const args5 = ["myzset", max, min, "WITHSCORES", "LIMIT", offset, count];
+		const args8 = ["myzset", "+inf", "-inf"];
+		const args6 = ["player_level_1", 0, 15,"WITHSCORES"];
+		const args7 = ["player_level_1_1595692800000", "000d1fe0-5b1d-4c81-a857-23614e41279d"];
+		const args9 = ["player_level_1_1595692800000", "000d1fe0-5b1d-4c81-a857-23614e41279d"];
+		let res1 = await this.zadd(args);
+		let res3 = await this.zrevrangebyscore(args5);
+		let res2 = await this.zadd(args2);
+		let res4 = await this.zrevrangebyscore(args5);
+		let res5 = await this.zrange(args6);
+		let res6 = await this.zrank(args7);
+		let res7 = await this.zscore(args9);
+		console.log('------------------------222------',_.isArray(res5),'-----------------222-------------')
+		for (let i=0;i<res5.length; i++){
+			console.log('------------------------------',res5[i],'------------------------------')
+		}
+		console.log(res1, 'gggggggggggggggggggggg000000000000000000000000000000', res2,'hhhhhhhhh',res3,'hh00000000000000',res4);
+		console.log('===========================================================',res5, '===========================================================');
+		console.log('==============================res6=============================',res6, '==============================res6=============================');
+		console.log('==============================res7=============================',res7, '==============================res7=============================');
+	}
 	
 	//----------------------------------- zset(主要是做排行榜之类的) --------------------------------------------
 	/**
