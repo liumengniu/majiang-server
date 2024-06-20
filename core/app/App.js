@@ -22,8 +22,8 @@ const App = {
 	client: null,
 	startAllServer: function () {
 		try {
-			this.cleanRedis();
-			this.testRedis();
+			// this.cleanRedis();
+			// this.testRedis();
 			this.initSocket();
 			this.initServer();
 			this.startDoorServer();      // 门服务

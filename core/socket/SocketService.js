@@ -3,7 +3,6 @@
  * @author Kevin
  * @Date: 2024-6-18
  */
-
 const WebSocket = require('ws');
 const cacheClient = require("./../../utils/cacheClient");
 const Utils = require("./../../utils");
@@ -11,6 +10,7 @@ const stringify = require('fast-json-stable-stringify');
 const _ = require("lodash");
 const RoomService = require("../app/RoomService");
 const PlayerManager = require("../app/PlayerManager");
+const GameService = require("../../services/game/GameService");
 
 class SocketService{
 	constructor(){
@@ -77,8 +77,14 @@ class SocketService{
 					this.ws.userId = message.data;
 					this.sendMessage(stringify({message: '设置成功', data:{userId: message.data},type: "setUserId"}));
 					break;
+				case "startGame":
+					const roomId = message?.roomId;
+					const roomInfo = RoomService.rooms[roomId];
+					const cards = GameService.startGame(roomId);
+					for(let k in roomInfo){
+						this.sendToUser(k,`房间${roomId}游戏开始`,cards,'startGame');
+					}
 			}
-			console.log('重连用户', message.data);
 			let roomId = await cacheClient.get('userRoom', message.data);
 			if (roomId) {
 				let roomInfo = RoomService.rooms[roomId];
@@ -129,11 +135,18 @@ class SocketService{
 			console.log('-wsws----------------', ws)
 			if (ws.userId === userId) {
 				console.log('推送用户：', ws.userId);
-				ws.send(stringify({message, data,type}));
+				ws.send(stringify({message, data, type}));
 			}
 		})
 	}
-	//广播给房间
+	
+	/**
+	 * 广播给房间全部玩家
+	 * @param userIds
+	 * @param message
+	 * @param data
+	 * @param type
+	 */
 	broadcastToRoom(userIds, message,data,type){
 		for(let i=0;i<userIds.length;i++){
 			let userId = userIds[i];
