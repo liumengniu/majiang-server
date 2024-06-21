@@ -103,8 +103,12 @@ const GameService = {
 	playCard: function (roomId, cardNum, playerId){
 		let oldRoomInfo = _.get(RoomService, `rooms.${roomId}`);
 		let oldPlayedCards = _.get(oldRoomInfo, `${playerId}.playedCards`, []);
+		let oldHandCards = _.get(oldRoomInfo, `${playerId}.handCards`, []);
 		oldPlayedCards.push(cardNum);
-		const newRoomInfo = DataHelper.setRoomInfoDeep("playedCards",playerId, oldRoomInfo, oldPlayedCards);
+		let newHandCards = _.filter(oldHandCards, o=>o !== cardNum);
+		let newRoomInfo = oldRoomInfo;
+		_.set(newRoomInfo, `${playerId}.playedCards`, oldPlayedCards)
+		_.set(newRoomInfo, `${playerId}.handCards`, newHandCards)
 		this.updateRooms(roomId, newRoomInfo)
 		return newRoomInfo;
 	}
