@@ -51,7 +51,6 @@ class SocketService{
 			
 			ws.on('message', async function (message) {
 				console.log(message.toString());
-				console.log('ws.userId', ws.userId);
 				await _this.onMessageHandle(message.toString(), ws.userId);
 			});
 			ws.on('close', async function(e) {
@@ -70,22 +69,9 @@ class SocketService{
 			console.log('心跳反回了吗');
 			this.sendHeartBeat(userId);
 		} else if(Utils.isJSON(message)) {
-			message = JSON.parse(message);
-			switch (message.type) {
-				case 'setUserId':
-					console.log('11111111111111');
-					this.ws.userId = message.data;
-					this.sendMessage(stringify({message: '设置成功', data:{userId: message.data},type: "setUserId"}));
-					break;
-				case "startGame":
-					const roomId = message?.roomId;
-					const roomInfo = RoomService.rooms[roomId];
-					const cards = GameService.startGame(roomId);
-					for(let k in roomInfo){
-						this.sendToUser(k,`房间${roomId}游戏开始`,cards,'startGame');
-					}
-			}
-			let roomId = await cacheClient.get('userRoom', message.data);
+			const parseMessage = JSON.parse(_.cloneDeep(message));
+			this.onMessageTypeHandle(parseMessage)
+			let roomId = await cacheClient.get('userRoom', parseMessage.data);
 			if (roomId) {
 				let roomInfo = RoomService.rooms[roomId];
 				if (roomInfo?.roomStatus === 2) {
@@ -96,6 +82,37 @@ class SocketService{
 			}
 		} else {
 			console.log(message);
+		}
+	}
+	
+	/**
+	 * websocket回调(根据约定的消息类型)
+	 * @param message
+	 */
+	onMessageTypeHandle(message){
+		const type = message.type;
+		const data = message?.data;
+		if(message.type === "setUserId") {
+			this.ws.userId = message.data;
+			this.sendMessage(stringify({message: '设置成功', data:{userId: message.data},type: "setUserId"}));
+		} else if(type === "startGame"){
+			// let roomInfo = RoomService.rooms[message?.roomId];
+			let roomInfo = GameService.startGame(message?.roomId);
+			for(let k in roomInfo){
+				this.sendToUser(k,`房间${message?.roomId}游戏开始`,roomInfo,'startGame');
+			}
+		} else if(type ==="playCard"){
+			const roomInfo = GameService.playCard(message?.data.roomId,message?.data.cardNum,message?.data.userId);
+			console.log("开始推送给", roomInfo)
+			for(let k in roomInfo){
+				this.sendToUser(k, `房间${data?.roomId}玩家出牌`, {
+					roomInfo: roomInfo,
+					cardNum: data?.cardNum,
+					playerId: data?.userId
+				}, 'playCard');
+			}
+		} else {
+		
 		}
 	}
 	
@@ -129,12 +146,10 @@ class SocketService{
 		})
 	}
 	//单发消息给单个用户
-	sendToUser(userId, message,data,type){
-		console.log(userId, message,data,type,'-----------------')
+	sendToUser(userId, message, data, type) {
 		this.client.clients.forEach(ws => {
-			console.log('-wsws----------------', ws)
 			if (ws.userId === userId) {
-				console.log('推送用户：', ws.userId);
+				console.log(`推送至用户id${ws.userId}的消息`,  message, data, type);
 				ws.send(stringify({message, data, type}));
 			}
 		})

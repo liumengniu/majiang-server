@@ -5,6 +5,7 @@
 const _ = require("lodash")
 const RoomService = require("../../core/app/RoomService");
 const moment = require("moment")
+const DataHelper = require("../../utils/DataHelper");
 
 const GameService = {
 	cards: [
@@ -25,13 +26,14 @@ const GameService = {
 		181,182,183,184,185,186,187,188,189,//筒
 	],
 	gameCards:[],
-	roomGameInfo: {},  //房间详情
+	gameInfo: {},  //房间详情
+	roomGameInfo: {},  //房间的详情，包括游戏详情
 	/**
 	 * 初始化游戏服务
 	 * @param roomId
 	 */
 	init: function (roomId){
-		this.roomGameInfo = RoomService.getRoomInfo(roomId);
+		this.gameInfo = RoomService.getRoomInfo(roomId);
 	},
 	/**
 	 * 洗牌算法
@@ -45,7 +47,6 @@ const GameService = {
 			arr[idx] = arr[i];
 			arr[i] = t;
 		}
-		console.log(arr,'ggggggggggggggggggggggggggggggggggg')
 		return arr;
 	},
 	/**
@@ -55,34 +56,61 @@ const GameService = {
 		let roomInfo = _.get(RoomService, `rooms.${roomId}`, {});
 		this.gameCards = _.cloneDeep(this.shuffle());
 		//生成游戏开始数据
+		let idx = 0;
+		let roomGameInfo;
 		for (let key in roomInfo) {
 			let data = {};
 			data.startTime = moment().valueOf();
 			data.status = 2;
-			data.gameCards = this.gameCards;
-			this.updateRoomGameInfo(roomId, key, data);
+			data.handCards = this.getHandCards(this.gameCards, idx);
+			data.playedCards = [];
+			roomGameInfo = this.updateRoomInfo(key, roomInfo, _.assign({},roomInfo[key],data))
+			idx++;
 		}
-		this.roomGameInfo = roomInfo;
-		return this.gameCards;
+		this.roomGameInfo = roomGameInfo;
+		this.updateRooms(roomId, roomGameInfo)
+		return roomGameInfo;
 	},
 	/**
-	 * 更新正在游玩的房间的游戏数据
+	 *  获取手牌数据
 	 */
-	updateRoomGameInfo: function (roomId, playerId, data) {
-		let oldInfo = _.get(RoomService.rooms, `${roomId}.${playerId}`);
-		// todo 注意lodash 的方法会直接改引用地址的数据，无法多修改一次数据
-		let newInfo = _.assign(oldInfo, data);
-		this.updatePlayerInfoByRoom(roomId, playerId, newInfo);
+	getHandCards: function (cards, idx) {
+		let handCards = [];
+		handCards = idx === 0 ? cards.slice(0, 14) : idx === 1 ? cards.slice(14, 27) : idx === 2 ? cards.slice(27, 40) : idx === 3 ? cards.slice(40, 53) : [];
+		return handCards
 	},
 	/**
-	 * 更改房间集合里的 - 玩家信息
+	 * 修改房间数据
+	 */
+	updateRoomInfo: function (playerId, roomInfo, data){
+		return DataHelper.setRoomInfo(playerId, roomInfo, data)
+	},
+	/**
+	 * 修改服务器所有房间数据源中某个房间数据
 	 * @param roomId
-	 * @param playerId
-	 * @param data
+	 * @param roomInfo
 	 */
-	updatePlayerInfoByRoom: function (roomId, playerId, data) {
-		_.set(RoomService, `rooms.${roomId}.${playerId}`, data);
+	updateRooms: function (roomId, roomInfo) {
+		let oldRooms = _.get(RoomService, `rooms`);
+		DataHelper.setRoomsInfo(roomId, oldRooms, roomInfo)
 	},
+	/**
+	 * 某个玩家出牌
+	 * @param roomId
+	 * @param cardNum
+	 * @param playerId
+	 */
+	playCard: function (roomId, cardNum, playerId){
+		let oldRoomInfo = _.get(RoomService, `rooms.${roomId}`);
+		let oldPlayedCards = _.get(oldRoomInfo, `${playerId}.playedCards`, []);
+		oldPlayedCards.push(cardNum);
+		const newRoomInfo = DataHelper.setRoomInfoDeep("playedCards",playerId, oldRoomInfo, oldPlayedCards);
+		this.updateRooms(roomId, newRoomInfo)
+		return newRoomInfo;
+	}
+	/**
+	 * 某个玩家碰牌
+	 */
 }
 
 module.exports = GameService
