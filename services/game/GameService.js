@@ -75,9 +75,23 @@ const GameService = {
 	 *  获取手牌数据
 	 */
 	getHandCards: function (cards, idx) {
-		let handCards = [];
-		handCards = idx === 0 ? cards.slice(0, 14) : idx === 1 ? cards.slice(14, 27) : idx === 2 ? cards.slice(27, 40) : idx === 3 ? cards.slice(40, 53) : [];
-		return handCards
+		let handCards = idx === 0 ? cards.slice(0, 14) : idx === 1 ? cards.slice(14, 27) : idx === 2 ? cards.slice(27, 40) : idx === 3 ? cards.slice(40, 53) : [];
+		return this.adjustHandCards(handCards);
+	},
+	/**
+	 * 整理手牌(万、条、索合并并排序)
+	 */
+	adjustHandCards: function (cards){
+		let adjustCards = _.cloneDeep(cards);
+		for (let i = 0; i < adjustCards.length - 1; i++) {
+			for (let j = 0; j < adjustCards.length - i - 1; j++) {
+				if (adjustCards[j]%50 > adjustCards[j + 1]%50) {
+					[adjustCards[j], adjustCards[j + 1]] = [adjustCards[j + 1], adjustCards[j]];
+				}
+			}
+		}
+		
+		return adjustCards
 	},
 	/**
 	 * 修改房间数据
@@ -111,10 +125,87 @@ const GameService = {
 		_.set(newRoomInfo, `${playerId}.handCards`, newHandCards)
 		this.updateRooms(roomId, newRoomInfo)
 		return newRoomInfo;
-	}
+	},
 	/**
-	 * 某个玩家碰牌
+	 * 检测其他人打出的牌（主要是碰和杠）
 	 */
+	handleOtherPlayerCard: function (roomId, playerId, cardNum){
+		let roomInfo = _.get(RoomService, `rooms.${roomId}`);
+		const values = _.keys[roomInfo];
+		_.map(values, o=>{
+			//判断是否能碰
+			const handCards = o?.handCards;
+			const sameCard = _.size(_.filter(handCards, h => h === cardNum));
+			if(sameCard === 3){  //可以碰
+			
+			} else if(sameCard === 2){  //可以杠
+			
+			}
+			
+		})
+	},
+	/**
+	 * 判断是否可以胡牌（湖南麻将必须自摸才能胡牌）
+	 * @param cards
+	 * 胡牌必须手上的牌型满足 AAA + ABC + AA(只有一对将) 三个条件
+	 */
+	checkIsWinning: function (cards) {
+		if (cards.length % 3 !== 2) return false;  // 检查手牌长度是否符合胡牌要求
+		cards.sort((a, b) => a % 50 - b % 50);     // 将手牌再次排序防止BUG（非必须，摸牌时已经排序过）
+		// 检查所有可能的将牌组合
+		for (let i = 0; i < cards.length - 1; i++) {
+			if (cards[i] === cards[i + 1]) {
+				// 复制手牌并去掉将牌
+				let remaining = cards.slice();
+				remaining.splice(i, 2);
+				// 递归检查剩余的牌是否符合AAA+ABC规则
+				if (this.checkIsAAAorABC(remaining)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	},
+	/**
+	 * 检测牌是否是 AAA 或 ABC 牌型
+	 * @param cards
+	 * @returns {boolean}
+	 */
+	checkIsAAAorABC: function (cards){
+		if (cards.length === 0) return true;
+		
+		// 检查是否可以拆分出AAA
+		for (let i = 0; i < cards.length - 2; i++) {
+			if (cards[i] === cards[i + 1] && cards[i] === cards[i + 2]) {
+				let remaining = cards.slice();
+				remaining.splice(i, 3);
+				if (this.checkIsAAAorABC(remaining)) return true;
+			}
+		}
+		
+		// 检查是否可以拆分出ABC
+		for (let i = 0; i < cards.length - 2; i++) {
+			let a = cards[i];
+			let b = a + 1;
+			let c = a + 2;
+			if (cards.includes(b) && cards.includes(c)) {
+				let remaining = cards.slice();
+				remaining.splice(remaining.indexOf(a), 1);
+				remaining.splice(remaining.indexOf(b), 1);
+				remaining.splice(remaining.indexOf(c), 1);
+				if (cards(remaining)) return true;
+			}
+		}
+		return false;
+	},
+	
+	/**
+	 * 检测手牌（主要是自摸和杠）
+	 */
+	handleHandCard: function (){
+	
+	}
+	
 }
 
 module.exports = GameService
