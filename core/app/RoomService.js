@@ -14,7 +14,9 @@ const User = models.User;
  *
  * 2 roomIds  [...roomId]
  *
- * 3 scoreInfos
+ * 3 scoreInfos { roomId: gameInfo }
+ *  gameInfo.activeIdx   服务端最后发给玩家的牌的索引
+ *  gameInfo.cards       服务端当前洗完牌的集合
  */
 
 const RoomService = {
@@ -27,9 +29,9 @@ const RoomService = {
 	 */
 	roomIds: [],
 	/**
-	 * 得分情况集合
+	 * 所有房间游戏情况集合
 	 */
-	scoreInfos: {},
+	gameCollections: {},
 	/**
 	 * 创建房间
 	 * @param playerId
@@ -46,7 +48,7 @@ const RoomService = {
 			}
 			PlayerManager.setPos(roomId, playerId, 0);
 			let data = _.zipObject([playerId], [{
-				id: playerId, roomId: roomId, status: 1, score: 0, isHomeOwner: true, pos: 0,
+				id: playerId, roomId: roomId, status: 1, score: 0, isHomeOwner: true, pos: 0, optionPos: 0,
 				roomRule: user.roomRule || 0, avatar: user.avatar, name: user.name, isHint: user.isHint || 0
 			}]);
 			this.rooms = DataHelper.setRoomsInfo(roomId, this.rooms, data);
@@ -92,7 +94,8 @@ const RoomService = {
 			status: 0,
 			score: 0,
 			isHomeOwner: false,
-			pos: playerCount,
+			pos: playerCount - 1,
+			optionPos: 0,
 			roomRule: 0,
 			avatar: user.avatar,
 			name: user.name,

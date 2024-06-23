@@ -102,7 +102,7 @@ class SocketService{
 				this.sendToUser(k,`房间${message?.roomId}游戏开始`,roomInfo,'startGame');
 			}
 		} else if(type ==="playCard"){
-			const roomInfo = GameService.playCard(message?.data.roomId,message?.data.cardNum,message?.data.userId);
+			const roomInfo = GameService.playCard(data.roomId,data.cardNum,data.userId);
 			console.log("开始推送给", roomInfo)
 			for(let k in roomInfo){
 				this.sendToUser(k, `房间${data?.roomId}玩家出牌`, {
@@ -111,6 +111,8 @@ class SocketService{
 					playerId: data?.userId
 				}, 'playCard');
 			}
+			// 检测其他玩家是否需要打出的牌
+			GameService.handleOtherPlayerCard(data.roomId,data.userId, data.cardNum)
 		} else {
 		
 		}

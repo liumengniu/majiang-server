@@ -1,4 +1,5 @@
 const _ = require("lodash");
+const RoomService = require("../core/app/RoomService");
 
 const DataHelper = {
 	/**
@@ -36,6 +37,33 @@ const DataHelper = {
 		response = _.set(roomInfo, `${playerId}.${type}`, data);
 		return _.cloneDeep(response);
 	},
+	/**
+	 * 初始化 gameCollections 的数据
+	 * @param roomId
+	 * @param activeCardIdx
+	 * @param cards
+	 */
+	initGameCollections(roomId, activeCardIdx, cards){
+		let  gameCollections = _.get(RoomService, `gameCollections`, {});
+		gameCollections[roomId] = {
+			activeCardIdx: _.toNumber(activeCardIdx), cards
+		}
+		_.set(RoomService, `gameCollections`, gameCollections);
+	},
+	/**
+	 * 更新 gameCollections的数据
+	 * @param roomId
+	 */
+	updateGameCollections(roomId) {
+		const gameInfo = _.get(RoomService, `gameCollections.${roomId}`, {});
+		const oldCards = _.get(gameInfo, `cards`, [])
+		let response;
+		const oldActiveCardIdx = _.get(gameInfo, `activeCardIdx`);
+		let newActiveCardIdx = _.toNumber(oldActiveCardIdx) + 1;
+		response = _.set(gameInfo, `activeCardIdx`, newActiveCardIdx);
+		_.set(RoomService, `gameCollections.${roomId}`, response);
+		return _.get(oldCards, `${newActiveCardIdx}`);
+	}
 };
 
 module.exports = DataHelper;
