@@ -188,7 +188,6 @@ const GameService = {
 		})
 		if(!isPlayerOption){  //没有人能碰或者杠，则顺延的下家摸牌（服务端发一张牌给下家）
 			const newCardNum = DataHelper.updateGameCollections(roomId);
-			
 			// DataHelper.setRoomsInfo()
 			let nextPlayerId;
 			_.map(keys, (otherPlayerId, idx)=>{

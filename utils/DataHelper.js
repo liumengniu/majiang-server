@@ -38,6 +38,19 @@ const DataHelper = {
 		return _.cloneDeep(response);
 	},
 	/**
+	 * 更新手牌
+	 */
+	updateHandCards: function (playerId, newCardNum){
+	
+	},
+	/**
+	 * 更新打出去的牌
+	 */
+	updatePlayedCards: function (){
+	
+	},
+	
+	/**
 	 * 初始化 gameCollections 的数据
 	 * @param roomId
 	 * @param activeCardIdx
