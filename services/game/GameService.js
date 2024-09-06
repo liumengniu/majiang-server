@@ -93,6 +93,7 @@ const GameService = {
 	 * 整理手牌(万、条、索合并并排序)
 	 */
 	adjustHandCards: function (cards){
+
 		let adjustCards = _.cloneDeep(cards);
 		for (let i = 0; i < adjustCards.length - 1; i++) {
 			for (let j = 0; j < adjustCards.length - i - 1; j++) {
