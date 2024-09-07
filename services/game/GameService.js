@@ -149,7 +149,9 @@ const GameService = {
 		let newRoomInfo = oldRoomInfo;
 		_.set(newRoomInfo, `${playerId}.playedCards`, oldPlayedCards)
 		_.set(newRoomInfo, `${playerId}.handCards`, newHandCards)
+		// todo 是否要修改房间每个人的 optionPos和出牌时间
 		_.set(newRoomInfo, `${playerId}.optionPos`, this.getNextPlayerPos(playerId,oldRoomInfo))
+		_.set(newRoomInfo, `${playerId}.optionTime`, moment().valueOf())
 		this.updateRooms(roomId, newRoomInfo)
 		return newRoomInfo;
 	},
@@ -172,10 +174,10 @@ const GameService = {
 		const keys = _.keys(roomInfo);
 		const values = _.values(roomInfo);
 		let isPlayerOption = false;
-		_.map(keys, (otherPlayerId, idx)=>{
+		_.map(_.filter(keys, k => k !== playerId), (otherPlayerId, idx)=>{
 			//判断是否能碰
-			const handCards = _.get(roomInfo, `${playerId}.handCards`, []);
-			const sameCard = _.size(_.filter(handCards, h => h === cardNum));
+			const handCards = _.get(roomInfo, `${otherPlayerId}.handCards`, []);
+			const sameCard = _.size(_.filter(handCards, h => h%50 === cardNum%50));
 			if(sameCard === 3){  //可以碰
 				isPlayerOption = true;
 				ws.sendToUser(otherPlayerId, "可以杠牌", 3, "option");

@@ -11,6 +11,7 @@ const _ = require("lodash");
 const RoomService = require("../app/RoomService");
 const PlayerManager = require("../app/PlayerManager");
 const GameService = require("../../services/game/GameService");
+const moment = require("moment")
 
 class SocketService{
 	constructor(){
@@ -102,17 +103,22 @@ class SocketService{
 				this.sendToUser(k,`房间${message?.roomId}游戏开始`,roomInfo,'startGame');
 			}
 		} else if(type ==="playCard"){
+			// 1.更新服务器数据
 			const roomInfo = GameService.playCard(data.roomId,data.cardNum,data.userId);
 			console.log("开始推送给", roomInfo)
+			// 2. 新数据推送给相关玩家
 			for(let k in roomInfo){
 				this.sendToUser(k, `房间${data?.roomId}玩家出牌`, {
 					roomInfo: roomInfo,
 					cardNum: data?.cardNum,
-					playerId: data?.userId
+					playerId: data?.userId,
+					playCardTime: moment().valueOf()
 				}, 'playCard');
 			}
-			// 检测其他玩家是否需要打出的牌
+			// 3. 检测其他玩家是否需要打出的牌
 			GameService.handleOtherPlayerCard(data.roomId,data.userId, data.cardNum)
+			// 4. 这张牌其他玩家可以处理（碰杠胡），推送给能处理的玩家
+
 		} else {
 		
 		}

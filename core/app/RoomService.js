@@ -94,7 +94,7 @@ const RoomService = {
 			status: 0,
 			score: 0,
 			isHomeOwner: false,
-			pos: playerCount - 1,
+			pos: playerCount,
 			optionPos: 0,
 			roomRule: 0,
 			avatar: user.avatar,
