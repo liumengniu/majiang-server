@@ -119,8 +119,12 @@ class SocketService{
 			GameService.handleOtherPlayerCard(data.roomId,data.userId, data.cardNum)
 			// 4. 这张牌其他玩家可以处理（碰杠胡），推送给能处理的玩家
 
+		} else if(type ==="peng"){
+
+		} else if(type ==="gang"){
+
 		} else {
-		
+
 		}
 	}
 	
