@@ -5,7 +5,6 @@
 const _ = require("lodash")
 const RoomService = require("../../core/app/RoomService");
 const moment = require("moment")
-const DataHelper = require("../../utils/DataHelper");
 // const SocketService = require("../../core/socket/SocketService");
 
 // let ws = SocketService.getInstance();
@@ -109,7 +108,7 @@ const GameService = {
 	 * 修改房间数据
 	 */
 	updateRoomInfo: function (playerId, roomInfo, data){
-		return DataHelper.setRoomInfo(playerId, roomInfo, data)
+		return RoomService.setRoomInfo(playerId, roomInfo, data)
 	},
 	/**
 	 * 修改服务器所有房间数据源中某个房间数据
@@ -118,20 +117,20 @@ const GameService = {
 	 */
 	updateRooms: function (roomId, roomInfo) {
 		let oldRooms = _.get(RoomService, `rooms`);
-		DataHelper.setRoomsInfo(roomId, oldRooms, roomInfo)
+		RoomService.setRoomsInfo(roomId, oldRooms, roomInfo)
 	},
 	/**
 	 * 修改服务器保存的所有房间的游戏数据
 	 */
 	initGames: function (roomId, activeCardIdx, cards) {
-		DataHelper.initGameCollections(roomId, activeCardIdx, cards)
+		RoomService.initGameCollections(roomId, activeCardIdx, cards)
 	},
 	/**
 	 * 更新服务器保存的所有房间的游戏数据
 	 * @param roomId
 	 */
 	updateGames: function (roomId) {
-		DataHelper.updateGameCollections(roomId)
+		RoomService.updateGameCollections(roomId)
 	},
 	/**
 	 * 某个玩家出牌
@@ -152,7 +151,11 @@ const GameService = {
 		// todo 是否要修改房间每个人的 optionPos和出牌时间
 		_.set(newRoomInfo, `${playerId}.optionPos`, this.getNextPlayerPos(playerId,oldRoomInfo))
 		_.set(newRoomInfo, `${playerId}.optionTime`, moment().valueOf())
+		// 更新对局游戏数据
+		RoomService.setGameCollectionsDeep(roomId, "optionPos", this.getNextPlayerPos(playerId,oldRoomInfo))
+		RoomService.setGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		this.updateRooms(roomId, newRoomInfo)
+		console.log(RoomService, '----------------000000000000000--------------')
 		return newRoomInfo;
 	},
 	/**
@@ -180,18 +183,14 @@ const GameService = {
 			const sameCard = _.size(_.filter(handCards, h => h%50 === cardNum%50));
 			if(sameCard === 3){  //可以碰
 				isPlayerOption = true;
-				ws.sendToUser(otherPlayerId, "可以杠牌", 3, "option");
+				ws.sendToUser(otherPlayerId, "可以杠牌", 3, "operate");
 			} else if(sameCard === 2){  //可以杠
 				isPlayerOption = true;
-				ws.sendToUser(otherPlayerId, "可以碰牌", 2, "option");
-			} else {
-				// isPlayerOption = false;
-				// ws.sendToUser(playerId, "轮到我摸牌", 1, "option");
+				ws.sendToUser(otherPlayerId, "可以碰牌", 2, "operate");
 			}
 		})
 		if(!isPlayerOption){  //没有人能碰或者杠，则顺延的下家摸牌（服务端发一张牌给下家）
-			const newCardNum = DataHelper.updateGameCollections(roomId);
-			// DataHelper.setRoomsInfo()
+			const newCardNum = RoomService.getNextCard(roomId);
 			let nextPlayerId;
 			_.map(keys, (otherPlayerId, idx)=>{
 				if(otherPlayerId === playerId){
@@ -199,8 +198,10 @@ const GameService = {
 				}
 				ws.sendToUser(otherPlayerId, "轮到下家摸牌", 1, "nextHandCard");
 			})
+			// 更新摸牌人的手牌
+			const newRoomInfo = RoomService.updateHandCards(roomId, nextPlayerId, newCardNum, RoomService)
 			//发一张牌给下家
-			ws.sendToUser(nextPlayerId, "摸一张牌", {cardNum: newCardNum, }, "deliverCard");
+			ws.sendToUser(nextPlayerId, "摸一张牌", {cardNum: newCardNum,roomInfo: newRoomInfo, playerId: nextPlayerId }, "deliverCard");
 		} else { // 否则等待20秒（标准时间），20秒内无人碰或者杠，则还是顺延下家
 
 		}
