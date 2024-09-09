@@ -479,7 +479,7 @@ const RoomService = {
 	 */
 	setGameCollectionsDeep(roomId, type, data){
 		let gameInfo = this.getGameInfo(roomId)
-		if(_.isArray()){
+		if(_.isArray(data)){
 			_.map(data, o=>{
 				_.set(gameInfo, o?.type, o?.data);
 			})

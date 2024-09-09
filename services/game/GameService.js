@@ -183,10 +183,10 @@ const GameService = {
 			const sameCard = _.size(_.filter(handCards, h => h%50 === cardNum%50));
 			if(sameCard === 3){  //可以碰
 				isPlayerOption = true;
-				ws.sendToUser(otherPlayerId, "可以杠牌", 3, "operate");
+				ws.sendToUser(otherPlayerId, "可以杠牌", {operateType: 3, playerId: otherPlayerId}, "operate");
 			} else if(sameCard === 2){  //可以杠
 				isPlayerOption = true;
-				ws.sendToUser(otherPlayerId, "可以碰牌", 2, "operate");
+				ws.sendToUser(otherPlayerId, "可以碰牌", {operateType: 2, playerId: otherPlayerId}, "operate");
 			}
 		})
 		if(!isPlayerOption){  //没有人能碰或者杠，则顺延的下家摸牌（服务端发一张牌给下家）
@@ -266,8 +266,33 @@ const GameService = {
 	 */
 	handleHandCard: function (){
 
+	},
+	/**
+	 * 开碰
+	 */
+	peng: function (roomId, playerId, pengArr){
+		const roomInfo = RoomService.getRoomInfo(roomId);
+		const oldHandCards = _.get(roomInfo, `${playerId}.handCards`);
+		const newHandCards = _.filter(oldHandCards, o=> !_.includes(pengArr, o));
+		const oldPlayedCards = _.get(roomInfo, `${playerId}.playedCards`);
+		const newPlayedCards = _.uniq(_.concat([], oldPlayedCards, pengArr));
+		RoomService.setRoomInfoDeep("handCards", playerId, roomInfo, newHandCards)
+		RoomService.setRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
+		return RoomService.getRoomInfo(roomId);
+	},
+	/**
+	 * 开杠
+	 */
+	gang: function (roomId, playerId, gangArr){
+		const roomInfo = RoomService.getRoomInfo(roomId);
+		const oldHandCards = _.get(roomInfo, `${playerId}.handCards`);
+		const newHandCards = _.filter(oldHandCards, o=> !_.includes(gangArr, o));
+		const oldPlayedCards = _.get(roomInfo, `${playerId}.playedCards`);
+		const newPlayedCards = _.uniq(_.concat([], oldPlayedCards, gangArr));
+		RoomService.setRoomInfoDeep("handCards", playerId, roomInfo, newHandCards)
+		RoomService.setRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
+		return RoomService.getRoomInfo(roomId);
 	}
-
 }
 
 module.exports = GameService

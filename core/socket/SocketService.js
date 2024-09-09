@@ -118,11 +118,20 @@ class SocketService{
 			// 3. 检测其他玩家是否需要打出的牌
 			GameService.handleOtherPlayerCard(data.roomId,data.userId, data.cardNum)
 			// 4. 这张牌其他玩家可以处理（碰杠胡），推送给能处理的玩家
-
 		} else if(type ==="peng"){
-
+			// 1. 修改游戏数据
+			const roomInfo = GameService.peng(data?.roomId,data.userId, data?.pengArr)
+			// 2. 新数据推送给相关玩家
+			for(let k in roomInfo){
+				this.sendToUser(k, `房间${data?.roomId}玩家${data.userId}开碰`, {
+					roomInfo: roomInfo,
+					pengArr: data?.pengArr,
+					playerId: data?.userId,
+					playCardTime: moment().valueOf()
+				}, 'peng');
+			}
 		} else if(type ==="gang"){
-
+			GameService.peng(data?.roomId,data.userId, data?.gangArr)
 		} else {
 
 		}
