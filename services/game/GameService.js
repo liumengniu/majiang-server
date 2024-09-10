@@ -149,10 +149,10 @@ const GameService = {
 		_.set(newRoomInfo, `${playerId}.playedCards`, oldPlayedCards)
 		_.set(newRoomInfo, `${playerId}.handCards`, newHandCards)
 		// todo 是否要修改房间每个人的 optionPos和出牌时间
-		_.set(newRoomInfo, `${playerId}.optionPos`, this.getNextPlayerPos(playerId,oldRoomInfo))
-		_.set(newRoomInfo, `${playerId}.optionTime`, moment().valueOf())
+		// _.set(newRoomInfo, `${playerId}.optionPos`, this.getNextPlayerPos(roomId, playerId))
+		// _.set(newRoomInfo, `${playerId}.optionTime`, moment().valueOf())
 		// 更新对局游戏数据
-		RoomService.setGameCollectionsDeep(roomId, "optionPos", this.getNextPlayerPos(playerId,oldRoomInfo))
+		RoomService.setGameCollectionsDeep(roomId, "optionPos", this.getNextPlayerPos(roomId, playerId))
 		RoomService.setGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		this.updateRooms(roomId, newRoomInfo)
 		console.log(RoomService, '----------------000000000000000--------------')
@@ -160,12 +160,15 @@ const GameService = {
 	},
 	/**
 	 * 获取下一位出牌的玩家（同时其他玩家可以-抢碰、抢杠）
+	 * @param roomId
 	 * @param playerId
-	 * @param roomInfo
 	 */
-	getNextPlayerPos:function (playerId, roomInfo){
-		let playerPos = _.get(roomInfo, `${playerId}.pos`);
-		return _.toNumber(playerPos) + 1  > 3 ? 0 : _.toNumber(playerPos) + 1;
+	getNextPlayerPos:function (roomId, playerId){
+		const gameInfo = RoomService.getGameInfo(roomId);
+		const roomInfo = RoomService.getRoomInfo(roomId);
+		let optionPos = _.get(gameInfo, `optionPos`, 0);
+		const playerCount = _.size(roomInfo) - 1;
+		return _.toNumber(optionPos) + 1  > playerCount ? 0 : _.toNumber(optionPos) + 1;
 	},
 	/**
 	 * 检测其他人打出的牌（主要是碰和杠）
@@ -278,6 +281,8 @@ const GameService = {
 		const newPlayedCards = _.uniq(_.concat([], oldPlayedCards, pengArr));
 		RoomService.setRoomInfoDeep("handCards", playerId, roomInfo, newHandCards)
 		RoomService.setRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
+		RoomService.setGameCollectionsDeep(roomId, "optionPos", this.getNextPlayerPos(roomId, playerId))
+		RoomService.setGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		return RoomService.getRoomInfo(roomId);
 	},
 	/**
@@ -291,6 +296,8 @@ const GameService = {
 		const newPlayedCards = _.uniq(_.concat([], oldPlayedCards, gangArr));
 		RoomService.setRoomInfoDeep("handCards", playerId, roomInfo, newHandCards)
 		RoomService.setRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
+		RoomService.setGameCollectionsDeep(roomId, "optionPos", this.getNextPlayerPos(roomId, playerId))
+		RoomService.setGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		return RoomService.getRoomInfo(roomId);
 	}
 }

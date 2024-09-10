@@ -4,6 +4,7 @@ const _ = require("lodash");
 const PlayerManager = require("./PlayerManager");
 const models = require("./../../models");
 const User = models.User;
+const moment = require("moment")
 /**
  * 数据结构
  * 1、rooms {roomId: roomInfo}
@@ -447,14 +448,18 @@ const RoomService = {
 		let gameCollections = {};
 		gameCollections[roomId] = {
 			activeCardIdx: _.toNumber(activeCardIdx),
-			cards
+			cards,
+			optionPos: 0,
+			optionTime: moment().valueOf()
 		}
+		console.log(gameCollections, '=========gameCollections-=-=-=-=-=-=-=-=-=')
 		this.gameCollections = _.cloneDeep(gameCollections)
 	},
 	/**
 	 * 获取当前房间的游戏信息
 	 */
 	getGameInfo: function (roomId){
+		console.log(this.gameCollections, '----------------===========1111111111111===============', roomId)
 		return _.get(this.gameCollections, `${roomId}`, {});
 	},
 	/**

@@ -97,19 +97,21 @@ class SocketService{
 			this.ws.userId = message.data;
 			this.sendMessage(stringify({message: '设置成功', data:{userId: message.data},type: "setUserId"}));
 		} else if(type === "startGame"){
-			// let roomInfo = RoomService.rooms[message?.roomId];
 			let roomInfo = GameService.startGame(message?.roomId);
+			const gameInfo = RoomService.getGameInfo(message?.roomId)
 			for(let k in roomInfo){
-				this.sendToUser(k,`房间${message?.roomId}游戏开始`,roomInfo,'startGame');
+				this.sendToUser(k,`房间${message?.roomId}游戏开始`,{roomInfo, gameInfo},'startGame');
 			}
 		} else if(type ==="playCard"){
 			// 1.更新服务器数据
-			const roomInfo = GameService.playCard(data.roomId,data.cardNum,data.userId);
+			const roomInfo = GameService.playCard(data?.roomId,data?.cardNum,data?.userId);
+			const gameInfo = RoomService.getGameInfo(data?.roomId)
 			console.log("开始推送给", roomInfo)
 			// 2. 新数据推送给相关玩家
 			for(let k in roomInfo){
 				this.sendToUser(k, `房间${data?.roomId}玩家出牌`, {
-					roomInfo: roomInfo,
+					roomInfo,
+					gameInfo,
 					cardNum: data?.cardNum,
 					playerId: data?.userId,
 					playCardTime: moment().valueOf()
@@ -132,6 +134,8 @@ class SocketService{
 			}
 		} else if(type ==="gang"){
 			GameService.peng(data?.roomId,data.userId, data?.gangArr)
+		} else if (type === "win") { //胡牌
+
 		} else {
 
 		}
