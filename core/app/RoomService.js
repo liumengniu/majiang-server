@@ -420,13 +420,29 @@ const RoomService = {
 		return roomInfo;
 	},
 	/**
+	 * 整理手牌(万、条、索合并并排序)
+	 */
+	adjustHandCards: function (cards){
+		let adjustCards = _.cloneDeep(cards);
+		for (let i = 0; i < adjustCards.length - 1; i++) {
+			for (let j = 0; j < adjustCards.length - i - 1; j++) {
+				if (adjustCards[j]%50 > adjustCards[j + 1]%50) {
+					[adjustCards[j], adjustCards[j + 1]] = [adjustCards[j + 1], adjustCards[j]];
+				}
+			}
+		}
+		return adjustCards
+	},
+	/**
 	 * 更新手牌数据
 	 */
 	updateHandCards: function (roomId, playerId, newCardNum){
 		let roomInfo = this.getRoomInfo(roomId);
 		let newHandCards = _.concat(_.get(roomInfo, `${playerId}.handCards`, []), [newCardNum])
-		const response = this.setRoomInfoDeep("handCards", playerId, roomInfo, newHandCards)
-		return response;
+		// 摸牌之后，重新洗手牌排序
+		const newCards = this.adjustHandCards(newHandCards);
+		const newRoomInfo = this.setRoomInfoDeep("handCards", playerId, roomInfo, newCards)
+		return {newRoomInfo, newCards};
 	},
 	/**
 	 * 更新打出去的牌数据
