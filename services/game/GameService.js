@@ -196,8 +196,8 @@ const GameService = {
 			const newCardNum = RoomService.getNextCard(roomId);
 			let nextPlayerId;
 			_.map(keys, (otherPlayerId, idx)=>{
-				if(otherPlayerId === playerId){
-					nextPlayerId = idx+1 <=3 ? keys[idx+1] : keys[0];
+				if (otherPlayerId === playerId) {
+					nextPlayerId = idx + 1 >= _.size(keys) ? keys[0] : keys[idx + 1];
 				}
 				ws.sendToUser(otherPlayerId, "轮到下家摸牌", 1, "nextHandCard");
 			})
