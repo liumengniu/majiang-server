@@ -124,13 +124,6 @@ const GameService = {
 		RoomService.initGameCollections(roomId, activeCardIdx, cards)
 	},
 	/**
-	 * 更新服务器保存的所有房间的游戏数据
-	 * @param roomId
-	 */
-	updateGames: function (roomId) {
-		RoomService.updateGameCollections(roomId)
-	},
-	/**
 	 * 某个玩家出牌
 	 * @param roomId
 	 * @param cardNum
@@ -150,7 +143,6 @@ const GameService = {
 		RoomService.setGameCollectionsDeep(roomId, "optionPos", this.getNextPlayerPos(roomId, playerId))
 		RoomService.setGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		this.updateRooms(roomId, newRoomInfo)
-		console.log(RoomService, '----------------000000000000000--------------')
 		return newRoomInfo;
 	},
 	/**
@@ -176,7 +168,7 @@ const GameService = {
 		this.handleHandCardByMe(roomId, playerId, cardNum)
 	},
 	/**
-	 * 判断是否可以胡牌（湖南麻将必须自摸才能胡牌）
+	 * 判断是否可以胡牌
 	 * @param cards
 	 * 胡牌必须手上的牌型满足 AAA + ABC + AA(只有一对将) 三个条件
 	 */
