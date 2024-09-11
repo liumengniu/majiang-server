@@ -438,7 +438,7 @@ const RoomService = {
 	 */
 	updateHandCards: function (roomId, playerId, newCardNum){
 		let roomInfo = this.getRoomInfo(roomId);
-		let newHandCards = _.concat(_.get(roomInfo, `${playerId}.handCards`, []), [newCardNum])
+		let newHandCards = _.concat([], _.get(roomInfo, `${playerId}.handCards`, []), [newCardNum])
 		// 摸牌之后，重新洗手牌排序
 		const newCards = this.adjustHandCards(newHandCards);
 		const newRoomInfo = this.setRoomInfoDeep("handCards", playerId, roomInfo, newCards)

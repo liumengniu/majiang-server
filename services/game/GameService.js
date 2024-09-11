@@ -185,18 +185,28 @@ const GameService = {
 		cards.sort((a, b) => a % 50 - b % 50);     // 将手牌再次排序防止BUG（非必须，摸牌时已经排序过）
 		// 检查所有可能的将牌组合
 		for (let i = 0; i < cards.length - 1; i++) {
-			if (cards[i] === cards[i + 1]) {
+			if (cards[i]%50 === cards[i + 1]%50) {
 				// 复制手牌并去掉将牌
 				let remaining = cards.slice();
 				remaining.splice(i, 2);
 				// 递归检查剩余的牌是否符合AAA+ABC规则
-				if (this.checkIsAAAorABC(remaining)) {
+				if (this.checkIsAAAorABC(this.computedCards(remaining))) {
 					return true;
 				}
 			}
 		}
 		return false;
 	},
+
+	/**
+	 * 将原始卡牌 换算成用于计算的卡牌
+	 * 原来的麻将牌通过50的倍数定义的（---->因为每个花色牌有4张相同的，计算时又不需要区分<----），计算时需要换算成便于计算的
+	 * @param cards
+	 */
+	computedCards: function (cards) {
+		return _.map(cards, o => o % 50)
+	},
+
 	/**
 	 * 检测牌是否是 AAA 或 ABC 牌型
 	 * @param cards
@@ -224,7 +234,7 @@ const GameService = {
 				remaining.splice(remaining.indexOf(a), 1);
 				remaining.splice(remaining.indexOf(b), 1);
 				remaining.splice(remaining.indexOf(c), 1);
-				if (cards(remaining)) return true;
+				if (this.checkIsAAAorABC(remaining)) return true;
 			}
 		}
 		return false;
@@ -241,13 +251,12 @@ const GameService = {
 		const ws = SocketService.getInstance();
 		let roomInfo = _.get(RoomService, `rooms.${roomId}`);
 		const keys = _.keys(roomInfo);
-		let isPlayerOption = false;
-		// 判断是否胡牌
+		let isPlayerOption = false;  // 其他玩家是否可以进行操作
 		_.map(_.filter(keys, k => k !== playerId), (otherPlayerId, idx)=>{
-			//判断是否能碰
 			const handCards = _.get(roomInfo, `${otherPlayerId}.handCards`, []);
 			const sameCard = _.size(_.filter(handCards, h => h%50 === cardNum%50));
 			const cards = _.concat([], handCards, [cardNum]);
+			// 判断是否胡牌
 			const isWinning = this.checkIsWinning(cards)
 			if(isWinning) { // 可以胡
 				isPlayerOption = true;
@@ -288,9 +297,9 @@ const GameService = {
 		ws.sendToUser(nextPlayerId, "摸一张牌", {cardNum: newCardNum,roomInfo: newRoomInfo, playerId: nextPlayerId }, "deliverCard");
 		// 3. 自摸牌检测
 		const isWinning = this.checkIsWinning(newCards);
-		const sameCard = _.size(_.filter(newCards, h => h%50 === cardNum%50));
+		const sameCard = _.size(_.filter(newCards, h => h%50 === newCardNum%50));
 		if(isWinning){
-			ws.sendToUser(nextPlayerId, "自摸胡牌", {cardNum: newCardNum,roomInfo: newRoomInfo, playerId: nextPlayerId }, "win");
+			ws.sendToUser(nextPlayerId, "自摸，可以胡牌", {operateType: 4, playerId: nextPlayerId}, "operate");
 		} else if(sameCard === 4){
 			ws.sendToUser(nextPlayerId, "自摸杠牌", {operateType: 3, playerId: nextPlayerId}, "operate");
 		}
