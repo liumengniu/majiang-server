@@ -4,13 +4,13 @@
  */
 
 const Router = require('koa-router');
-const Validate = require("../../utils/vlidate");
-const Errors = require("../../utils/api/errors");
-const HttpStatus = require("../../utils/api/httpStatus");
-const PlayerManager = require("../../core/services/PlayerService");
-const RoomService = require("../../core/services/RoomService");
-const UserService = require("../../services/user/UserService");
-const ConfigServices = require("../../core/services/ConfigServices");
+const Validate = require("@/utils/vlidate");
+const Errors = require("@/utils/api/errors");
+const HttpStatus = require("@/utils/api/httpStatus");
+const PlayerManager = require("@/core/services/PlayerService");
+const RoomService = require("@/core/services/RoomService");
+const UserService = require("@/services/user/UserService");
+const ConfigServices = require("@/core/services/ConfigServices");
 const user = new Router();
 const _ = require("lodash")
 
