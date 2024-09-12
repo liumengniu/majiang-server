@@ -1,8 +1,8 @@
 // const SocketService = require("./../socket/SocketService");
 // const ws = SocketService.getInstance();
 const _ = require("lodash");
-const PlayerManager = require("./PlayerManager");
-const models = require("./../../models");
+const PlayerManager = require("./PlayerService");
+const models = require("../../models");
 const User = models.User;
 const moment = require("moment")
 /**
@@ -220,7 +220,7 @@ const RoomService = {
 		}
 		//推送给客户端
 		let roomInfo = _.get(this.rooms, roomId);
-		const SocketService = require("./../socket/SocketService");
+		const SocketService = require("../socket/SocketService");
 		const ws = SocketService.getInstance();
 		for (let pid in roomInfo) {
 			ws.sendToUser(pid, `用户${pid}已经退出房间`, roomInfo, 'quit');

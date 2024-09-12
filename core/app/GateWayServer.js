@@ -9,7 +9,6 @@ const app = new Koa();
 const router = require('./../../routers/gateway');
 const bodyParser = require('koa-bodyparser');
 const Utils = require("./../../utils/index");
-// const router = require('koa-router')();
 const appConfig = require("./../../config/AppletsConfig")
 
 class GateWayServer{

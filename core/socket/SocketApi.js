@@ -3,7 +3,7 @@
  * @Date: 2024-6-18
  */
 
-const Api = {
+const SocketApi = {
 	create: "create",//创建房间
 	join: 'join',//加入房间
 	quit: "quit",//退出房间
@@ -25,4 +25,4 @@ const Api = {
 	Other: "Other",
 };
 
-module.exports = Api;
+module.exports = SocketApi;

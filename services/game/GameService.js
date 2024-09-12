@@ -3,7 +3,7 @@
  * @Date: 2024-6-20
  */
 const _ = require("lodash")
-const RoomService = require("../../core/app/RoomService");
+const RoomService = require("../../core/services/RoomService");
 const moment = require("moment")
 // const SocketService = require("../../core/socket/SocketService");
 

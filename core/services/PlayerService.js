@@ -5,7 +5,7 @@
 
 const _ = require("lodash");
 
-const PlayerManager = {
+const PlayerService = {
 	playerInfos: {},
 	
 	/**
@@ -126,4 +126,4 @@ const PlayerManager = {
 	}
 };
 
-module.exports = PlayerManager;
+module.exports = PlayerService;

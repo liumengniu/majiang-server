@@ -3,8 +3,8 @@ const User = models.User;
 const SocketService = require("./../../core/socket/SocketService.js");
 let ws = SocketService.getInstance();
 const {v4: uuidv4} = require('uuid');
-const cacheClient = require("./../../utils/cacheClient");
-const RoomService = require("./../../core/app/RoomService");
+const cacheClient = require("@utils/cacheClient");
+const RoomService = require("../../core/services/RoomService");
 const _ = require("lodash");
 const moment = require("moment");
 

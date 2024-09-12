@@ -5,5 +5,6 @@
  */
 
 global.Promise = require('bluebird');
-const App = require("./core/app/App");
+require('module-alias/register');
+const App = require("@/core/app/App");
 App.startAllServer();

@@ -8,8 +8,8 @@ const cacheClient = require("./../../utils/cacheClient");
 const Utils = require("./../../utils");
 const stringify = require('fast-json-stable-stringify');
 const _ = require("lodash");
-const RoomService = require("../app/RoomService");
-const PlayerManager = require("../app/PlayerManager");
+const RoomService = require("../services/RoomService");
+const PlayerManager = require("../services/PlayerService");
 const GameService = require("../../services/game/GameService");
 const moment = require("moment")
 

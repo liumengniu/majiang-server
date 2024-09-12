@@ -7,7 +7,7 @@
 
 const Router = require('koa-router');
 const SocketService = require("../../core/socket/SocketService");
-const RoomService = require("../../core/app/RoomService");
+const RoomService = require("../../core/services/RoomService");
 const Validate = require("../../utils/vlidate");
 const Errors = require("../../utils/api/errors");
 const HttpStatus = require("../../utils/api/httpStatus");
