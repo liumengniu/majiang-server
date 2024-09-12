@@ -280,7 +280,7 @@ const GameService = {
 			ws.sendToUser(otherPlayerId, "轮到下家摸牌", 1, "nextHandCard");
 		})
 		// 1. 更新摸牌人的手牌
-		const {newRoomInfo, newCards} = RoomService.updateHandCards(roomId, nextPlayerId, newCardNum, RoomService)
+		const {newRoomInfo, newCards} = RoomService.updateHandCards(roomId, nextPlayerId, newCardNum)
 		// 2. 发一张牌给下家
 		ws.sendToUser(nextPlayerId, "摸一张牌", {cardNum: newCardNum,roomInfo: newRoomInfo, playerId: nextPlayerId }, "deliverCard");
 		// 3. 自摸牌检测
@@ -325,11 +325,12 @@ const GameService = {
 	 * 【结算分数】
 	 * 【杠牌算翻倍】
 	 */
-	win: function (roomId, playerId) {
+	win: function (roomId, playerId, cardNum) {
+		// cardNum 有数据则是胡别人的牌， cardNum无数据则是自摸胡牌
 		const roomInfo = RoomService.getRoomInfo(roomId);
 		const handCards = _.get(roomInfo, `${playerId}.handCards`);
 		const playedCards = _.get(roomInfo, `${playerId}.playedCards`);
-		const cards = _.concat([], handCards, playedCards);
+		const cards = _.concat([], handCards, playedCards, cardNum);
 		let gangCount = 0;
 		// 检查是否有杠牌
 		for (let i = 0; i < cards.length - 3; i++) {
@@ -338,9 +339,9 @@ const GameService = {
 			}
 		}
 		let result = {}
-		_.forEach(roomInfo, (value, key)=>{
+		_.forEach(roomInfo, (value, key) => {
 			result[key] = {
-				cards: _.concat([], _.get(value, 'handCards'), _.get(value, 'playedCards')),
+				cards: _.concat([], _.get(value, 'handCards'), _.get(value, 'playedCards'), key === playerId ? [cardNum] : null),
 				isWinner: key === playerId,
 				gangCount: key === playerId ? gangCount : 0,
 				score: key === playerId ? gangCount * this.gangScore + this.winScore : -this.this.winScore

@@ -135,7 +135,7 @@ class SocketService{
 		} else if (type === "gang") { //杠牌
 			GameService.peng(data?.roomId, data.userId, data?.gangArr)
 		} else if (type === "win") { //胡牌
-			const result = GameService.win(data?.roomId, data.userId);
+			const result = GameService.win(data?.roomId, data.userId, data?.cardNum);
 			const roomInfo = GameService.peng(data?.roomId, data.userId, data?.pengArr)
 			for (let k in roomInfo) {
 				this.sendToUser(k, `房间${data?.roomId}玩家${data.userId}胡牌`, {
