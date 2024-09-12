@@ -318,7 +318,8 @@ const GameService = {
 		const newPlayedCards = _.uniq(_.concat([], oldPlayedCards, gangArr));
 		// 杠完之后，从牌堆最后面下发一张新牌给开杠玩家
 		const cardNum = RoomService.getLastNextCard(roomId);
-		RoomService.setRoomInfoDeep("handCards", playerId, roomInfo, _.concat([], newHandCards, [cardNum]))
+		const finalHandCards = this.adjustHandCards(_.concat([], newHandCards, [cardNum]))
+		RoomService.setRoomInfoDeep("handCards", playerId, roomInfo, finalHandCards)
 		RoomService.setRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
 		RoomService.setGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		return RoomService.getRoomInfo(roomId);
