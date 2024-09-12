@@ -125,14 +125,13 @@ const GameService = {
 	 */
 	playCard: function (roomId, cardNum, playerId){
 		let oldRoomInfo = _.get(RoomService, `rooms.${roomId}`);
-		const keys = _.keys(oldRoomInfo)
 		let oldPlayedCards = _.get(oldRoomInfo, `${playerId}.playedCards`, []);
 		let oldHandCards = _.get(oldRoomInfo, `${playerId}.handCards`, []);
 		oldPlayedCards.push(cardNum);
 		let newHandCards = _.filter(oldHandCards, o=>o !== cardNum);
 		let newRoomInfo = oldRoomInfo;
-		_.set(newRoomInfo, `${playerId}.playedCards`, oldPlayedCards)
-		_.set(newRoomInfo, `${playerId}.handCards`, newHandCards)
+		RoomService.updateRoomInfoDeep("playedCards", playerId, oldRoomInfo, oldPlayedCards)
+		RoomService.updateRoomInfoDeep("handCards", playerId, oldRoomInfo, newHandCards)
 		// 更新对局游戏数据
 		RoomService.updateGameCollectionsDeep(roomId, "optionPos", this.getNextPlayerPos(roomId, playerId))
 		RoomService.updateGameCollectionsDeep(roomId, "optionTime", moment().valueOf())

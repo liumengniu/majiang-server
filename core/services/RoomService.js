@@ -254,7 +254,7 @@ const RoomService = {
 	 * @param roomId   (0 房间存在  1 房间已在游戏中 )
 	 */
 	setRoomStatus: function (roomId) {
-	
+
 	},
 	
 	/**
