@@ -133,7 +133,15 @@ class SocketService{
 				}, 'peng');
 			}
 		} else if (type === "gang") { //杠牌
-			GameService.peng(data?.roomId, data.userId, data?.gangArr)
+			const roomInfo = GameService.gang(data?.roomId, data.userId, data?.gangArr)
+			for (let k in roomInfo) {
+				this.sendToUser(k, `房间${data?.roomId}玩家${data.userId}开杠`, {
+					roomInfo: roomInfo,
+					gangArr: data?.gangArr,
+					playerId: data?.userId,
+					playCardTime: moment().valueOf()
+				}, 'gang');
+			}
 		} else if (type === "win") { //胡牌
 			const result = GameService.win(data?.roomId, data.userId, data?.cardNum);
 			const roomInfo = GameService.peng(data?.roomId, data.userId, data?.pengArr)

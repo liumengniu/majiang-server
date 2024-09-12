@@ -74,6 +74,7 @@ const GameService = {
 		}
 		this.roomGameInfo = roomGameInfo;
 		this.updateRooms(roomId, roomGameInfo);
+		// 开始游戏，并发完手牌后，下一张牌的索引为52
 		this.initGames(roomId, 52, this.gameCards);
 		return roomGameInfo;
 	},
@@ -298,7 +299,7 @@ const GameService = {
 	peng: function (roomId, playerId, pengArr){
 		const roomInfo = RoomService.getRoomInfo(roomId);
 		const oldHandCards = _.get(roomInfo, `${playerId}.handCards`);
-		const newHandCards = _.filter(oldHandCards, o=> !_.includes(pengArr, o));
+		const newHandCards = _.filter(oldHandCards, o=> !_.includes(this.computedCards(pengArr), o%50));
 		const oldPlayedCards = _.get(roomInfo, `${playerId}.playedCards`);
 		const newPlayedCards = _.uniq(_.concat([], oldPlayedCards, pengArr));
 		RoomService.setRoomInfoDeep("handCards", playerId, roomInfo, newHandCards)
@@ -312,10 +313,12 @@ const GameService = {
 	gang: function (roomId, playerId, gangArr){
 		const roomInfo = RoomService.getRoomInfo(roomId);
 		const oldHandCards = _.get(roomInfo, `${playerId}.handCards`);
-		const newHandCards = _.filter(oldHandCards, o=> !_.includes(gangArr, o));
+		const newHandCards = _.filter(oldHandCards, o=> !_.includes(this.computedCards(gangArr), o%50));
 		const oldPlayedCards = _.get(roomInfo, `${playerId}.playedCards`);
 		const newPlayedCards = _.uniq(_.concat([], oldPlayedCards, gangArr));
-		RoomService.setRoomInfoDeep("handCards", playerId, roomInfo, newHandCards)
+		// 杠完之后，从牌堆最后面下发一张新牌给开杠玩家
+		const cardNum = RoomService.getLastNextCard(roomId);
+		RoomService.setRoomInfoDeep("handCards", playerId, roomInfo, _.concat([], newHandCards, [cardNum]))
 		RoomService.setRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
 		RoomService.setGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		return RoomService.getRoomInfo(roomId);
@@ -341,10 +344,10 @@ const GameService = {
 		let result = {}
 		_.forEach(roomInfo, (value, key) => {
 			result[key] = {
-				cards: _.concat([], _.get(value, 'handCards'), _.get(value, 'playedCards'), key === playerId ? [cardNum] : null),
+				cards: this.adjustHandCards(_.concat([], _.get(value, 'handCards'), key === playerId ? [cardNum] : null)),
 				isWinner: key === playerId,
 				gangCount: key === playerId ? gangCount : 0,
-				score: key === playerId ? gangCount * this.gangScore + this.winScore : -this.this.winScore
+				score: key === playerId ? gangCount * this.gangScore + this.winScore : -(this.winScore)
 			}
 		})
 		return result;

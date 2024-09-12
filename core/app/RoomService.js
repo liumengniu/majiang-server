@@ -464,6 +464,7 @@ const RoomService = {
 		let gameCollections = {};
 		gameCollections[roomId] = {
 			activeCardIdx: _.toNumber(activeCardIdx),
+			lastActiveCardIdx: _.size(cards) - 1,
 			cards,
 			optionPos: 0,
 			optionTime: moment().valueOf()
@@ -491,6 +492,20 @@ const RoomService = {
 		response = _.set(gameInfo, `activeCardIdx`, newActiveCardIdx);
 		_.set(this.gameCollections, `${roomId}`, gameInfo);
 		return _.get(oldCards, `${newActiveCardIdx}`);
+	},
+	/**
+	 * 开杠的玩家，从牌堆屁股补一张
+	 * @param roomId
+	 */
+	getLastNextCard(roomId){
+		const gameInfo = this.getGameInfo(roomId)
+		const oldCards = _.get(gameInfo, `cards`, [])
+		let response;
+		const oldLastActiveCardIdx = _.get(gameInfo, `lastActiveCardIdx`);
+		let newLastActiveCardIdx = _.toNumber(oldLastActiveCardIdx) - 1;
+		response = _.set(gameInfo, `lastActiveCardIdx`, newLastActiveCardIdx);
+		_.set(this.gameCollections, `${roomId}`, gameInfo);
+		return _.get(oldCards, `${newLastActiveCardIdx}`);
 	},
 	/**
 	 * 更新某一局游戏信息
