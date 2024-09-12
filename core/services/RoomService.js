@@ -1,8 +1,6 @@
-// const SocketService = require("./../socket/SocketService");
-// const ws = SocketService.getInstance();
 const _ = require("lodash");
-const PlayerManager = require("./PlayerService");
-const models = require("../../models");
+const PlayerManager = require("@/core/services/PlayerService");
+const models = require("@/models");
 const User = models.User;
 const moment = require("moment")
 /**

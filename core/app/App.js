@@ -5,13 +5,13 @@
 const Koa = require("koa");
 const app = new Koa();
 const _ = require('lodash');
-const router = require('./../../routers');
+const router = require('@/routers');
 const bodyParser = require('koa-bodyparser');
-const { sequelize } = require("./../../models");
-const SocketService = require("../socket/SocketService");
+const { sequelize } = require("@/models");
+const SocketService = require("@socket/SocketService");
 //门
-const DoorServer = require("./GateWayServer");
-const cacheClient = require("../../utils/CacheClient");
+const DoorServer = require("@/core/app/GateWayServer");
+const cacheClient = require("@/utils/CacheClient");
 
 const App = {
 	connectServers: [],           //连接服务器的数组

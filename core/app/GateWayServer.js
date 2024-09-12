@@ -6,10 +6,10 @@
 const _ = require("lodash");
 const Koa = require("koa");
 const app = new Koa();
-const router = require('./../../routers/gateway');
+const router = require('@/routers/gateway');
 const bodyParser = require('koa-bodyparser');
-const Utils = require("./../../utils/index");
-const appConfig = require("./../../config/AppletsConfig")
+const Utils = require("@/utils/index");
+const appConfig = require("@/config/AppletsConfig")
 
 class GateWayServer{
 	constructor(){
