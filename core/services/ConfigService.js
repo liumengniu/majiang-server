@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const ConfigServices = {
+const ConfigService = {
     serverConfigPath: path.normalize(__dirname + "/../../" +'/config/serviceConfig.json'),
     //读取 serviceConfig 下的配置
     loadAllConfig: function(){
@@ -46,4 +46,4 @@ const ConfigServices = {
     }
 };
 
-module.exports = ConfigServices;
+module.exports = ConfigService;

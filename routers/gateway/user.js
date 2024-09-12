@@ -10,7 +10,7 @@ const HttpStatus = require("@/utils/api/httpStatus");
 const PlayerManager = require("@/core/services/PlayerService");
 const RoomService = require("@/core/services/RoomService");
 const UserService = require("@/services/user/UserService");
-const ConfigServices = require("@/core/services/ConfigServices");
+const ConfigServices = require("@coreServices/ConfigService");
 const user = new Router();
 const _ = require("lodash")
 

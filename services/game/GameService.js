@@ -100,7 +100,7 @@ const GameService = {
 	 * 修改房间数据
 	 */
 	updateRoomInfo: function (playerId, roomInfo, data){
-		return RoomService.setRoomInfo(playerId, roomInfo, data)
+		return RoomService.updateRoomInfoShallow(playerId, roomInfo, data)
 	},
 	/**
 	 * 修改服务器所有房间数据源中某个房间数据
@@ -109,7 +109,7 @@ const GameService = {
 	 */
 	updateRooms: function (roomId, roomInfo) {
 		let oldRooms = _.get(RoomService, `rooms`);
-		RoomService.setRoomsInfo(roomId, oldRooms, roomInfo)
+		RoomService.updateRoomInfo(roomId, oldRooms, roomInfo)
 	},
 	/**
 	 * 修改服务器保存的所有房间的游戏数据
@@ -134,8 +134,8 @@ const GameService = {
 		_.set(newRoomInfo, `${playerId}.playedCards`, oldPlayedCards)
 		_.set(newRoomInfo, `${playerId}.handCards`, newHandCards)
 		// 更新对局游戏数据
-		RoomService.setGameCollectionsDeep(roomId, "optionPos", this.getNextPlayerPos(roomId, playerId))
-		RoomService.setGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
+		RoomService.updateGameCollectionsDeep(roomId, "optionPos", this.getNextPlayerPos(roomId, playerId))
+		RoomService.updateGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		this.updateRooms(roomId, newRoomInfo)
 		return newRoomInfo;
 	},
@@ -299,9 +299,9 @@ const GameService = {
 		const newHandCards = _.filter(oldHandCards, o=> !_.includes(this.computedCards(pengArr), o%50));
 		const oldPlayedCards = _.get(roomInfo, `${playerId}.playedCards`);
 		const newPlayedCards = _.uniq(_.concat([], oldPlayedCards, pengArr));
-		RoomService.setRoomInfoDeep("handCards", playerId, roomInfo, newHandCards)
-		RoomService.setRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
-		RoomService.setGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
+		RoomService.updateRoomInfoDeep("handCards", playerId, roomInfo, newHandCards)
+		RoomService.updateRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
+		RoomService.updateGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		return RoomService.getRoomInfo(roomId);
 	},
 	/**
@@ -316,9 +316,9 @@ const GameService = {
 		// 杠完之后，从牌堆最后面下发一张新牌给开杠玩家
 		const cardNum = RoomService.getLastNextCard(roomId);
 		const finalHandCards = this.adjustHandCards(_.concat([], newHandCards, [cardNum]))
-		RoomService.setRoomInfoDeep("handCards", playerId, roomInfo, finalHandCards)
-		RoomService.setRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
-		RoomService.setGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
+		RoomService.updateRoomInfoDeep("handCards", playerId, roomInfo, finalHandCards)
+		RoomService.updateRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
+		RoomService.updateGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		return RoomService.getRoomInfo(roomId);
 	},
 	/**

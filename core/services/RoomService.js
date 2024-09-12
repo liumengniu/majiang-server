@@ -50,7 +50,7 @@ const RoomService = {
 				id: playerId, roomId: roomId, status: 1, score: 0, isHomeOwner: true, pos: 0, optionPos: 0,
 				roomRule: user.roomRule || 0, avatar: user.avatar, name: user.name, isHint: user.isHint || 0
 			}]);
-			this.rooms = this.setRoomsInfo(roomId, this.rooms, data);
+			this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
 			// 设置玩家房间号 和 玩家位置
 			let playerInfo = {pos: 0, roomId};
 			PlayerManager.setPlayerInfo(roomId, playerId, playerInfo);
@@ -100,7 +100,7 @@ const RoomService = {
 			name: user.name,
 			isHint: true
 		}]));
-		this.rooms = this.setRoomsInfo(roomId, this.rooms, data);
+		this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
 		// 设置玩家房间号 和 玩家位置
 		let playerInfo = {pos: count, roomId};
 		PlayerManager.setPlayerInfo(roomId, playerId, playerInfo);
@@ -141,7 +141,7 @@ const RoomService = {
 				PlayerManager.setPos(roomId, nextPlayerId, 0);
 				_.set(this.rooms, `${roomId}.${nextPlayerId}.isHomeOwner`, true);
 			}
-			this.rooms = this.setRoomsInfo(roomId, this.rooms, data);
+			this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
 		}
 		return _.get(this.rooms, roomId, {});
 	},
@@ -187,7 +187,7 @@ const RoomService = {
 					PlayerManager.setPos(roomId, nextPlayerId, 0);
 					_.set(this.rooms, `${roomId}.${nextPlayerId}.isHomeOwner`, true);
 				}
-				this.rooms = this.setRoomsInfo(roomId, this.rooms, data);
+				this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
 				//todo -------------------------  end -------------------------------
 			} else {
 				// ----  该玩家不在游戏中  -----
@@ -214,7 +214,7 @@ const RoomService = {
 					PlayerManager.setPos(roomId, nextPlayerId, 0);
 					_.set(this.rooms, `${roomId}.${nextPlayerId}.isHomeOwner`, true);
 				}
-				this.rooms = this.setRoomsInfo(roomId, this.rooms, data);
+				this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
 			}
 		}
 		//推送给客户端
@@ -359,7 +359,7 @@ const RoomService = {
 				data.status = status;
 				let newPlayerInfgo = _.zipObject([playerId], [data]);
 				let res = _.assign({}, roomInfo, newPlayerInfgo);
-				this.rooms = this.setRoomsInfo(roomId, this.rooms, res);
+				this.rooms = this.updateRoomInfo(roomId, this.rooms, res);
 			}
 		}
 		return _.get(this.rooms, roomId)
@@ -383,43 +383,55 @@ const RoomService = {
 		let playerInfo = _.get(roomInfo, playerId);
 		return playerInfo;
 	},
+
 	/**
-	 * 1、修改 rooms 下第一层数据源
-	 * @param roomId {string}  房间id
-	 * @param rooms {object}  原rooms数据
-	 * @param data {index}  修改后的数据
+	 * 更新全部房间数据（！！！！！！！！慎用！！！！！！！！！！！）
+	 * @param newRooms
 	 */
-	setRoomsInfo(roomId, rooms, data) {
+	updateRooms: function (newRooms){
+		this.rooms = _.cloneDeep(newRooms);
+	},
+	/**
+	 * 更新某个房间的全部数据
+	 * @param roomId
+	 * @param rooms
+	 * @param data
+	 * @returns {*}
+	 */
+	updateRoomInfo(roomId, rooms, data) {
 		let response = _.set(rooms, [roomId], data);
 		return _.cloneDeep(response);
 	},
 	/**
-	 * 修改房间第一层数据
+	 * 修改房间某个玩家的全部数据
 	 * @param playerId   修改的某个玩家id
 	 * @param roomInfo   原房间roomInfo的数据
 	 * @param data       修改后的rooms数据
 	 * @returns {*}
 	 */
-	setRoomInfo(playerId, roomInfo, data){
+	updateRoomInfoShallow(playerId, roomInfo, data){
 		let response;
 		response = _.set(roomInfo, [playerId], data);
 		return _.cloneDeep(response);
 	},
 	/**
 	 * 修改房间第二层数据
+	 * （房间某个玩家的某个字段数据）
 	 * @param type       修改的属性
 	 * @param playerId   修改的某个玩家id
 	 * @param roomInfo   原房间roomInfo的数据
 	 * @param data       需要修改的房间某个属性的值
 	 * @returns {*}
 	 */
-	setRoomInfoDeep(type, playerId, roomInfo, data){
+	updateRoomInfoDeep(type, playerId, roomInfo, data){
 		let response;
 		response = _.set(roomInfo, `${playerId}.${type}`, data);
 		return roomInfo;
 	},
 	/**
 	 * 整理手牌(万、条、索合并并排序)
+	 * @param cards
+	 * @returns {*}
 	 */
 	adjustHandCards: function (cards){
 		let adjustCards = _.cloneDeep(cards);
@@ -434,23 +446,18 @@ const RoomService = {
 	},
 	/**
 	 * 更新手牌数据
+	 * @param roomId
+	 * @param playerId
+	 * @param newCardNum
+	 * @returns {{newCards: *, newRoomInfo: *}}
 	 */
 	updateHandCards: function (roomId, playerId, newCardNum){
 		let roomInfo = this.getRoomInfo(roomId);
 		let newHandCards = _.concat([], _.get(roomInfo, `${playerId}.handCards`, []), [newCardNum])
 		// 摸牌之后，重新洗手牌排序
 		const newCards = this.adjustHandCards(newHandCards);
-		const newRoomInfo = this.setRoomInfoDeep("handCards", playerId, roomInfo, newCards)
+		const newRoomInfo = this.updateRoomInfoDeep("handCards", playerId, roomInfo, newCards)
 		return {newRoomInfo, newCards};
-	},
-	/**
-	 * 更新打出去的牌数据
-	 */
-	updatePlayedCards: function (roomId, playerId, cardNum){
-		let roomInfo = this.getRoomInfo(roomId);
-		let newPlayedCards = _.concat(_.get(roomInfo, `${playerId}.playedCards`, []), [cardNum])
-		const response = this.setRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
-		return response;
 	},
 
 	/**
@@ -468,14 +475,14 @@ const RoomService = {
 			optionPos: 0,
 			optionTime: moment().valueOf()
 		}
-		console.log(gameCollections, '=========gameCollections-=-=-=-=-=-=-=-=-=')
 		this.gameCollections = _.cloneDeep(gameCollections)
 	},
 	/**
 	 * 获取当前房间的游戏信息
+	 * @param roomId
+	 * @returns {Exclude<GetFieldType<{}, `${string}`>, null | undefined> | {}}
 	 */
 	getGameInfo: function (roomId){
-		console.log(this.gameCollections, '----------------===========1111111111111===============', roomId)
 		return _.get(this.gameCollections, `${roomId}`, {});
 	},
 	/**
@@ -485,25 +492,22 @@ const RoomService = {
 	getNextCard(roomId) {
 		const gameInfo = this.getGameInfo(roomId)
 		const oldCards = _.get(gameInfo, `cards`, [])
-		let response;
 		const oldActiveCardIdx = _.get(gameInfo, `activeCardIdx`);
 		let newActiveCardIdx = _.toNumber(oldActiveCardIdx) + 1;
-		response = _.set(gameInfo, `activeCardIdx`, newActiveCardIdx);
-		_.set(this.gameCollections, `${roomId}`, gameInfo);
+		this.updateGameCollectionsDeep(roomId, "activeCardIdx", newActiveCardIdx)
 		return _.get(oldCards, `${newActiveCardIdx}`);
 	},
 	/**
-	 * 开杠的玩家，从牌堆屁股补一张
+	 * 从牌堆尾部下发下一张牌
+	 * （对于开杠的玩家，规则是从牌堆屁股补一张）
 	 * @param roomId
 	 */
 	getLastNextCard(roomId){
 		const gameInfo = this.getGameInfo(roomId)
 		const oldCards = _.get(gameInfo, `cards`, [])
-		let response;
 		const oldLastActiveCardIdx = _.get(gameInfo, `lastActiveCardIdx`);
 		let newLastActiveCardIdx = _.toNumber(oldLastActiveCardIdx) - 1;
-		response = _.set(gameInfo, `lastActiveCardIdx`, newLastActiveCardIdx);
-		_.set(this.gameCollections, `${roomId}`, gameInfo);
+		this.updateGameCollectionsDeep(roomId, "lastActiveCardIdx", newLastActiveCardIdx)
 		return _.get(oldCards, `${newLastActiveCardIdx}`);
 	},
 	/**
@@ -512,7 +516,7 @@ const RoomService = {
 	 * @param type
 	 * @param data
 	 */
-	setGameCollectionsDeep(roomId, type, data){
+	updateGameCollectionsDeep(roomId, type, data){
 		let gameInfo = this.getGameInfo(roomId)
 		if(_.isArray(data)){
 			_.map(data, o=>{
@@ -527,6 +531,8 @@ const RoomService = {
 	/**
 	 * 更新全部游戏信息
 	 * @param roomId
+	 * @param newGameInfo
+	 * @returns {{}}
 	 */
 	updateGameCollections: function (roomId, newGameInfo){
 		_.set(this.gameCollections, roomId, newGameInfo);
