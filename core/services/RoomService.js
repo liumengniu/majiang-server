@@ -1,20 +1,21 @@
-const _ = require("lodash");
-const PlayerManager = require("@/core/services/PlayerService");
 const models = require("@/models");
 const User = models.User;
+const _ = require("lodash");
 const moment = require("moment")
+const PlayerManager = require("@/core/services/PlayerService");
 /**
  * 数据结构
  * 1、rooms {roomId: roomInfo}
  * roomInfo.id    房间id  roomId
- * roomInfo.status  玩家的房间状态  0 未准备  1 准备  2 游戏中
+ * roomInfo.status  玩家的房间状态  0 未准备  1 准备  2 游戏中  3 已解散
  * roomInfo.score   玩家的分数
  *
  * 2 roomIds  [...roomId]
  *
  * 3 scoreInfos { roomId: gameInfo }
- *  gameInfo.activeIdx   服务端最后发给玩家的牌的索引
- *  gameInfo.cards       服务端当前洗完牌的集合
+ *  gameInfo.activeIdx       服务端最后发给玩家的牌的索引
+ *  gameInfo.lastActiveIdx   服务端最后发给杠牌玩家的牌的索引
+ *  gameInfo.cards           服务端当前洗完牌的集合
  */
 
 const RoomService = {
