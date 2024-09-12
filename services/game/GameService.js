@@ -30,6 +30,8 @@ const GameService = {
 	gameCards:[],
 	roomGameInfo: {},  //房间的详情，包括游戏详情
 	activeCardIdx: 52,
+	gangScore: 10,
+	winScore: 10,
 	/**
 	 * 初始化游戏服务
 	 * @param roomId
@@ -81,12 +83,6 @@ const GameService = {
 	getHandCards: function (cards, idx) {
 		let handCards = idx === 0 ? cards.slice(0, 14) : idx === 1 ? cards.slice(14, 27) : idx === 2 ? cards.slice(27, 40) : idx === 3 ? cards.slice(40, 53) : [];
 		return this.adjustHandCards(handCards);
-	},
-	/**
-	 * 摸一张新牌
-	 */
-	getNextCard: function (){
-		return this.activeCardIdx ++;
 	},
 	/**
 	 * 整理手牌(万、条、索合并并排序)
@@ -323,6 +319,34 @@ const GameService = {
 		RoomService.setRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
 		RoomService.setGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		return RoomService.getRoomInfo(roomId);
+	},
+	/**
+	 * 胡牌
+	 * 【结算分数】
+	 * 【杠牌算翻倍】
+	 */
+	win: function (roomId, playerId) {
+		const roomInfo = RoomService.getRoomInfo(roomId);
+		const handCards = _.get(roomInfo, `${playerId}.handCards`);
+		const playedCards = _.get(roomInfo, `${playerId}.playedCards`);
+		const cards = _.concat([], handCards, playedCards);
+		let gangCount = 0;
+		// 检查是否有杠牌
+		for (let i = 0; i < cards.length - 3; i++) {
+			if (cards[i] % 50 === cards[i + 1] % 50 && cards[i] % 50 === cards[i + 2] % 50 && cards[i] % 50 === cards[i + 3] % 50) {
+				gangCount++
+			}
+		}
+		let result = {}
+		_.forEach(roomInfo, (value, key)=>{
+			result[key] = {
+				cards: _.concat([], _.get(value, 'handCards'), _.get(value, 'playedCards')),
+				isWinner: key === playerId,
+				gangCount: key === playerId ? gangCount : 0,
+				score: key === playerId ? gangCount * this.gangScore + this.winScore : -this.this.winScore
+			}
+		})
+		return result;
 	}
 }
 
