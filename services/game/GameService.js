@@ -273,6 +273,12 @@ const GameService = {
 		let roomInfo = _.get(RoomService, `rooms.${roomId}`);
 		const keys = _.keys(roomInfo);
 		const newCardNum = RoomService.getNextCard(roomId);
+		if (!newCardNum) { //返回false，表示牌已摸完，流局
+			_.map(keys, otherPlayerId => {
+				ws.sendToUser(otherPlayerId, "流局，无人胜出", 1, "flow");
+			})
+			return
+		}
 		let nextPlayerId;
 		_.map(keys, (otherPlayerId, idx)=>{
 			if (otherPlayerId === playerId) {

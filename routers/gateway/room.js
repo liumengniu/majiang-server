@@ -3,8 +3,6 @@
  * @author Kevin
  * @Date: 2024-6-18
  */
-
-
 const Router = require('koa-router');
 const SocketService = require("@/core/socket/SocketService");
 const RoomService = require("@/core/services/RoomService");
@@ -31,7 +29,6 @@ room.post('/createRoom', async ctx =>{
 	let roomInfo;
 	try{
 		roomInfo = await RoomService.createRoom(userId);
-		console.log(roomInfo, '+++++++++++++++++++++++++++++++++++++++++++');
 		if(!_.isEmpty(roomInfo)){
 			ws.sendToUser(userId,`恭喜创建房间成功，房号${_.get(roomInfo,`${userId}.roomId`)}`,{roomInfo}, 'create');
 		} else {

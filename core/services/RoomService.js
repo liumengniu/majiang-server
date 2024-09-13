@@ -512,7 +512,7 @@ const RoomService = {
 		const oldActiveCardIdx = _.get(gameInfo, `activeCardIdx`);
 		let newActiveCardIdx = _.toNumber(oldActiveCardIdx) + 1;
 		this.updateGameCollectionsDeep(roomId, "activeCardIdx", newActiveCardIdx)
-		return _.get(oldCards, `${newActiveCardIdx}`);
+		return _.get(oldCards, `${newActiveCardIdx}`) || false;
 	},
 	/**
 	 * 从牌堆尾部下发下一张牌
