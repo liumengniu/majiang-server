@@ -103,7 +103,14 @@ class SocketService{
 			for (let k in roomInfo) {
 				this.sendToUser(k, `房间${message?.roomId}游戏开始`, {roomInfo, gameInfo}, 'startGame');
 			}
-		} else if (type === "playCard") {
+		} else if(type === "reconnect"){  //断线重连，获取全部数据
+			const playerId = data?.userId;
+			const roomId = PlayerService.getRoomId(playerId);
+			const playerInfo = PlayerService.getPlayerInfo(playerId);
+			const gameInfo = RoomService.getGameInfo(roomId)
+			const roomInfo = RoomService.getRoomInfo(roomId);
+			this.sendToUser(playerId, `断线重连成功，继续游戏`, {playerInfo, roomInfo, gameInfo, playerId}, 'reconnect');
+		}else if (type === "playCard") {
 			// 1.更新服务器数据
 			const roomInfo = GameService.playCard(data?.roomId, data?.cardNum, data?.userId);
 			const gameInfo = RoomService.getGameInfo(data?.roomId)
