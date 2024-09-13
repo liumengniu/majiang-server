@@ -69,4 +69,28 @@ room.post("/joinRoom", async ctx =>{
 	ctx.body = response;
 });
 
+/**
+ * 退出房间
+ */
+room.post("/quitRoom", async ctx =>{
+	let { roomId,userId } = ctx.request.body;
+	let response;
+	if(!userId){
+		response = Validate.checkSuccess("参数异常", Errors.INVALID_PARAM, HttpStatus.OK, {});
+		ctx.body = response;
+		return;
+	}
+	let roomInfo;
+	try{
+		roomInfo = await RoomService.quitRoom(roomId,userId);
+		for(let k in roomInfo){
+			ws.sendToUser(_.get(roomInfo,`${k}.id`),`用户${userId}已退出房间${roomId}`,roomInfo,'quit');
+		}
+		response = Validate.checkSuccess("加入成功", Errors.SUCCESS, HttpStatus.OK, roomInfo);
+	}catch(e){
+		response = Validate.checkSuccess(e, Errors.ROOM_NOT_EXIST, HttpStatus.OK, roomInfo);
+	}
+	ctx.body = response;
+});
+
 module.exports = room;
