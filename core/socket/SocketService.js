@@ -12,6 +12,7 @@ const stringify = require('fast-json-stable-stringify');
 const RoomService = require("@/core/services/RoomService");
 const PlayerService = require("@/core/services/PlayerService");
 const GameService = require("@/services/game/GameService");
+const SocketApi = require("@socket/SocketApi");
 
 
 class SocketService{
@@ -94,23 +95,23 @@ class SocketService{
 	onMessageTypeHandle(message) {
 		const type = message.type;
 		const data = message?.data;
-		if (message.type === "setUserId") {
+		if (message.type === SocketApi["setUserId"]) {
 			this.ws.userId = message.data;
 			this.sendMessage(stringify({message: '设置成功', data: {userId: message.data}, type: "setUserId"}));
-		} else if (type === "startGame") {
+		} else if (type === SocketApi["startGame"]) {
 			let roomInfo = GameService.startGame(message?.roomId);
 			const gameInfo = RoomService.getGameInfo(message?.roomId)
 			for (let k in roomInfo) {
 				this.sendToUser(k, `房间${message?.roomId}游戏开始`, {roomInfo, gameInfo}, 'startGame');
 			}
-		} else if(type === "reconnect"){  //断线重连，获取全部数据
+		} else if(type === SocketApi["reconnect"]){  //断线重连，获取全部数据
 			const playerId = data?.userId;
 			const roomId = PlayerService.getRoomId(playerId);
 			const playerInfo = PlayerService.getPlayerInfo(playerId);
 			const gameInfo = RoomService.getGameInfo(roomId)
 			const roomInfo = RoomService.getRoomInfo(roomId);
 			this.sendToUser(playerId, `断线重连成功，继续游戏`, {playerInfo, roomInfo, gameInfo, playerId}, 'reconnect');
-		}else if (type === "playCard") {
+		}else if (type === SocketApi["playCard"]) {
 			// 1.更新服务器数据
 			const roomInfo = GameService.playCard(data?.roomId, data?.cardNum, data?.userId);
 			const gameInfo = RoomService.getGameInfo(data?.roomId)
@@ -128,7 +129,7 @@ class SocketService{
 			// 3. 检测其他玩家是否需要打出的牌
 			GameService.handleOtherPlayerCard(data.roomId, data.userId, data.cardNum)
 			// 4. 这张牌其他玩家可以处理（碰杠胡），推送给能处理的玩家
-		} else if (type === "peng") {
+		} else if (type === SocketApi["peng"]) {
 			// 1. 修改游戏数据
 			const roomInfo = GameService.peng(data?.roomId, data.userId, data?.pengArr)
 			// 2. 新数据推送给相关玩家
@@ -140,7 +141,7 @@ class SocketService{
 					playCardTime: moment().valueOf()
 				}, 'peng');
 			}
-		} else if (type === "gang") { //杠牌
+		} else if (type === SocketApi["gang"]) { //杠牌
 			const roomInfo = GameService.gang(data?.roomId, data.userId, data?.gangArr)
 			for (let k in roomInfo) {
 				this.sendToUser(k, `房间${data?.roomId}玩家${data.userId}开杠`, {
@@ -150,7 +151,7 @@ class SocketService{
 					playCardTime: moment().valueOf()
 				}, 'gang');
 			}
-		} else if (type === "win") { //胡牌
+		} else if (type === SocketApi["win"]) { //胡牌
 			const result = GameService.win(data?.roomId, data.userId, data?.cardNum);
 			const roomInfo = GameService.peng(data?.roomId, data.userId, data?.pengArr)
 			for (let k in roomInfo) {

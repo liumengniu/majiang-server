@@ -59,7 +59,7 @@ room.post("/joinRoom", async ctx =>{
 	try{
 		roomInfo = await RoomService.joinRoom(roomId,userId);
 		for(let k in roomInfo){
-			ws.sendToUser(_.get(roomInfo,`${k}.id`),`欢迎用户${userId}加入房间${roomId}`,roomInfo,'join');
+			ws.sendToUser(_.get(roomInfo,`${k}.id`),`欢迎用户${userId}加入房间${roomId}`,{roomInfo},'join');
 		}
 		response = Validate.checkSuccess("加入成功", Errors.SUCCESS, HttpStatus.OK, roomInfo);
 	}catch(e){
