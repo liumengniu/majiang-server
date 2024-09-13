@@ -86,7 +86,7 @@ room.post("/quitRoom", async ctx =>{
 		for(let k in roomInfo){
 			ws.sendToUser(_.get(roomInfo,`${k}.id`),`用户${userId}已退出房间${roomId}`,roomInfo,'quit');
 		}
-		response = Validate.checkSuccess("加入成功", Errors.SUCCESS, HttpStatus.OK, roomInfo);
+		response = Validate.checkSuccess("退出成功", Errors.SUCCESS, HttpStatus.OK, roomInfo);
 	}catch(e){
 		response = Validate.checkSuccess(e, Errors.ROOM_NOT_EXIST, HttpStatus.OK, roomInfo);
 	}

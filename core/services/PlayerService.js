@@ -9,10 +9,10 @@ const PlayerService = {
 	/**
 	 * 数据结构
 	 * 1、playerInfos {playerId: playerInfo}
-	 * playerInfo.id       玩家id
-	 * playerInfo.status   玩家的状态  0 未准备  1 准备  2 游戏中  3 已解散
-	 * playerInfo.score    玩家的分数
-	 * playerInfo.pos      玩家的位置
+	 * playerInfo.id             玩家id
+	 * playerInfo.playerStatus   玩家的状态  0 未登录   1 已登录   2 房间中  3 游戏中
+	 * playerInfo.score          玩家的分数
+	 * playerInfo.pos            玩家的位置
 	 */
 	playerInfos: {},
 	
@@ -55,7 +55,7 @@ const PlayerService = {
 	 * @param playerId
 	 */
 	cleanUserRoomStatus: function (playerId) {  //将用户状态全部置空，恢复到未加入房间且未登录状态
-		let data = {isLogin: true};
+		let data = {isLogin: true, playerStatus: 1};
 		this.updatePlayerInfo(playerId, data)
 	},
 	
@@ -134,8 +134,7 @@ const PlayerService = {
 	 * @param playerId
 	 */
 	isPlayerInRoom: function (roomId, playerId) {
-		let info = _.get(this.playerInfos, playerId);
-		if (_.get(info, 'roomId') === roomId) {
+		if (this.getRoomId(playerId) === roomId) {
 			return true;
 		}
 		return false;

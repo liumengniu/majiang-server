@@ -4,6 +4,7 @@
  */
 const _ = require("lodash")
 const RoomService = require("@/core/services/RoomService");
+const PlayerService = require("@/core/services/PlayerService");
 const moment = require("moment")
 
 const GameService = {
@@ -68,8 +69,11 @@ const GameService = {
 			data.playedCards = [];
 			roomGameInfo = this.updateRoomInfo(key, roomInfo, _.assign({},roomInfo[key],data))
 			idx++;
+			// 更新房间全部玩家状态，状态改为游戏中
+			PlayerService.updatePlayerInfoDeep("playerStatus", key, 3)
 		}
 		this.roomGameInfo = roomGameInfo;
+		// 更新房间数据
 		this.updateRooms(roomId, roomGameInfo);
 		// 开始游戏，并发完手牌后，下一张牌的索引为52
 		this.initGames(roomId, 52, this.gameCards);
