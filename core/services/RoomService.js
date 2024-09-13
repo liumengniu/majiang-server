@@ -241,8 +241,11 @@ const RoomService = {
 	disbandRoom: function (roomId) {
 		this.rooms = _.omit(this.rooms, roomId);
 		this.roomIds = _.remove(this.roomIds, roomId);
-		// todo 清除该局游戏信息 gameInfo
-		// todo 清除该局玩家信息 playerInfo
+		this.resetGameCollections(roomId)
+		PlayerService.updatePlayerInfo({
+			isLogin: true,
+			playerStatus: 1,
+		})
 	},
 	
 	/**
@@ -366,8 +369,8 @@ const RoomService = {
 			if (playerInfo) {
 				let data = _.cloneDeep(playerInfo);
 				data.status = status;
-				let newPlayerInfgo = _.zipObject([playerId], [data]);
-				let res = _.assign({}, roomInfo, newPlayerInfgo);
+				let newPlayerInfo = _.zipObject([playerId], [data]);
+				let res = _.assign({}, roomInfo, newPlayerInfo);
 				this.rooms = this.updateRoomInfo(roomId, this.rooms, res);
 			}
 		}
@@ -486,6 +489,14 @@ const RoomService = {
 		}
 		this.gameCollections = _.cloneDeep(gameCollections)
 	},
+
+	/**
+	 * 重置游戏信息
+	 */
+	resetGameCollections(roomId){
+		_.omit(this.gameCollections, roomId)
+	},
+
 	/**
 	 * 获取当前房间的游戏信息
 	 * @param roomId
