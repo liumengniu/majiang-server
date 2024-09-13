@@ -6,13 +6,21 @@
 const _ = require("lodash");
 
 const PlayerService = {
+	/**
+	 * 数据结构
+	 * 1、playerInfos {playerId: playerInfo}
+	 * playerInfo.id       玩家id
+	 * playerInfo.status   玩家的状态  0 未准备  1 准备  2 游戏中  3 已解散
+	 * playerInfo.score    玩家的分数
+	 * playerInfo.pos      玩家的位置
+	 */
 	playerInfos: {},
 	
 	/**
 	 * 获取用户全部信息
 	 * @param playerId
 	 */
-	getUserGameInfo: function (playerId) {
+	getPlayerInfo: function (playerId) {
 		return _.get(this.playerInfos, playerId);
 	},
 	/**
@@ -21,9 +29,9 @@ const PlayerService = {
 	 * @param isLogin
 	 */
 	setIsLogin: function (playerId, isLogin) {
-		let info = _.get(this.playerInfos, playerId, {});
-		if (_.get(info, "isLogin") !== isLogin) {
-			_.set(this.playerInfos, `${playerId}.isLogin`, isLogin);
+		let info = this.getPlayerInfo(playerId);
+		if (info?.isLogin !== isLogin) {
+			this.updatePlayerInfoDeep("isLogin", playerId, isLogin)
 		}
 	},
 	/**
@@ -48,21 +56,29 @@ const PlayerService = {
 	 */
 	cleanUserRoomStatus: function (playerId) {  //将用户状态全部置空，恢复到未加入房间且未登录状态
 		let data = {isLogin: true};
-		_.set(this.playerInfos, playerId, data);
+		this.updatePlayerInfo(playerId, data)
 	},
 	
 	/**
-	 * 设置用户在房间操作的全部状态
-	 * @param roomId
+	 * 设置用户在房间操作的全部数据
 	 * @param playerId
 	 * @param data
 	 */
-	setPlayerInfo: function (roomId, playerId, data) {
-		let oldPlayerInfo = this.getUserGameInfo(playerId);
+	updatePlayerInfo: function (playerId, data) {
+		let oldPlayerInfo = this.getPlayerInfo(playerId);
 		let newPlayerInfo = _.assign({}, oldPlayerInfo, data);
 		_.set(this.playerInfos, playerId, newPlayerInfo);
+		return this.getPlayerInfo(playerId);
 	},
-	
+	/**
+	 * 修改玩家信息某个字段
+	 * @param type
+	 * @param playerId
+	 * @param data
+	 */
+	updatePlayerInfoDeep: function (type, playerId, data) {
+		_.set(this.playerInfos, `${playerId}.${type}`, data);
+	},
 	/**
 	 * 设置用户的房间id
 	 * @param roomId

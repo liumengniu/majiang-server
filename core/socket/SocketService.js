@@ -1,17 +1,18 @@
 /**
- * websocket相关服务（微信小程序端不兼容socket.io，这里用websocket）
+ * websocket相关服务（微信小程序端不兼容socket.io(需要自己额外处理)，这里用websocket）
  * @author Kevin
  * @Date: 2024-6-18
  */
 const WebSocket = require('ws');
-const cacheClient = require("./../../utils/cacheClient");
-const Utils = require("./../../utils");
-const stringify = require('fast-json-stable-stringify');
 const _ = require("lodash");
-const RoomService = require("../services/RoomService");
-const PlayerManager = require("../services/PlayerService");
-const GameService = require("../../services/game/GameService");
 const moment = require("moment")
+const cacheClient = require("@/utils/cacheClient");
+const Utils = require("@/utils");
+const stringify = require('fast-json-stable-stringify');
+const RoomService = require("@/core/services/RoomService");
+const PlayerService = require("@/core/services/PlayerService");
+const GameService = require("@/services/game/GameService");
+
 
 class SocketService{
 	constructor(){
@@ -156,13 +157,20 @@ class SocketService{
 
 		}
 	}
-	
+
+	/**
+	 * ws关闭回调
+	 * @param e
+	 * @param userId
+	 * @returns {Promise<void>}
+	 */
 	async onCloseHandle(e,userId){
-		let roomId = PlayerManager.getRoomId(userId);
+		console.log("------------------onCloseHandle---------------------")
+		let roomId = PlayerService.getRoomId(userId);
 		if(roomId){
-			RoomService.disconnect(roomId, userId);
+			// RoomService.disconnect(roomId, userId);
 		} else {
-			PlayerManager.cleanUserStatus(userId);
+			// PlayerService.cleanUserStatus(userId);
 		}
 	}
 	

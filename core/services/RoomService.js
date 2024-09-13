@@ -2,7 +2,7 @@ const models = require("@/models");
 const User = models.User;
 const _ = require("lodash");
 const moment = require("moment")
-const PlayerManager = require("@/core/services/PlayerService");
+const PlayerService = require("@/core/services/PlayerService");
 /**
  * 数据结构
  * 1、rooms {roomId: roomInfo}
@@ -17,6 +17,7 @@ const PlayerManager = require("@/core/services/PlayerService");
  *  gameInfo.lastActiveIdx   服务端最后发给杠牌玩家的牌的索引
  *  gameInfo.cards           服务端当前洗完牌的集合
  */
+
 
 const RoomService = {
 	/**
@@ -45,7 +46,7 @@ const RoomService = {
 				user = await User.findOne({where: {id: playerId}});
 			} catch (e) {
 			}
-			PlayerManager.setPos(roomId, playerId, 0);
+			PlayerService.setPos(roomId, playerId, 0);
 			let data = _.zipObject([playerId], [{
 				id: playerId, roomId: roomId, status: 1, score: 0, isHomeOwner: true, pos: 0, optionPos: 0,
 				roomRule: user.roomRule || 0, avatar: user.avatar, name: user.name, isHint: user.isHint || 0
@@ -53,9 +54,9 @@ const RoomService = {
 			this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
 			// 设置玩家房间号 和 玩家位置
 			let playerInfo = {pos: 0, roomId};
-			PlayerManager.setPlayerInfo(roomId, playerId, playerInfo);
-			// ----- end  -----
-			return _.get(this.rooms, roomId, {});
+			PlayerService.updatePlayerInfo(playerId, playerInfo);
+			console.log(PlayerService.getPlayerInfo(playerId), '==00000000000000000000000000===', RoomService.getRoomInfo(roomId))
+			return RoomService.getRoomInfo(roomId);
 		} else {
 			return null;
 		}
@@ -86,7 +87,7 @@ const RoomService = {
 		let roomInfo = _.get(this.rooms, roomId);
 		const user = await User.findOne({where: {id: playerId}});
 		let playerCount = this.getPlayerCount(roomId);
-		PlayerManager.setPos(roomId, playerId, playerCount);
+		PlayerService.setPos(roomId, playerId, playerCount);
 		let data = _.assign(roomInfo, _.zipObject([playerId], [{
 			id: playerId,
 			roomId: roomId,
@@ -103,7 +104,7 @@ const RoomService = {
 		this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
 		// 设置玩家房间号 和 玩家位置
 		let playerInfo = {pos: count, roomId};
-		PlayerManager.setPlayerInfo(roomId, playerId, playerInfo);
+		PlayerService.updatePlayerInfo(playerId, playerInfo);
 		// ----- end  -----
 		return _.get(this.rooms, roomId, {});
 	},
@@ -114,14 +115,14 @@ const RoomService = {
 	 * @param playerId
 	 */
 	quitRoom: function (roomId, playerId) {
-		let isInRoom = PlayerManager.isPlayerInRoom();
+		let isInRoom = PlayerService.isPlayerInRoom();
 		if (isInRoom) {   //在房间内
 			let roomInfo = _.get(this.rooms, roomId);
 			let oldPlayerInfo = _.get(roomInfo, playerId);
 			let isHomeOwner = _.get(oldPlayerInfo, 'isHomeOwner');
 			let data = _.omit(roomInfo, playerId);
 			//清除个人在房间内的数据,仅保留登录态
-			PlayerManager.cleanUserRoomStatus(playerId);
+			PlayerService.cleanUserRoomStatus(playerId);
 			//如果房间只有一个人，直接解散房间,清除房间的数据
 			if (!_.size(data)) {
 				this.disbandRoom(roomId);
@@ -132,13 +133,13 @@ const RoomService = {
 				let ids = _.keys(data);
 				let nextPlayerId = "";
 				for (let i = 0; i < ids.length; i++) {
-					let pos = PlayerManager.getPos(ids[i]);
+					let pos = PlayerService.getPos(ids[i]);
 					if (pos === 1) {
 						nextPlayerId = ids[i];
 						break;
 					}
 				}
-				PlayerManager.setPos(roomId, nextPlayerId, 0);
+				PlayerService.setPos(roomId, nextPlayerId, 0);
 				_.set(this.rooms, `${roomId}.${nextPlayerId}.isHomeOwner`, true);
 			}
 			this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
@@ -153,7 +154,7 @@ const RoomService = {
 	 * @param playerId
 	 */
 	disconnect: function (roomId, playerId) {
-		let isInRoom = PlayerManager.isPlayerInRoom(roomId, playerId);
+		let isInRoom = PlayerService.isPlayerInRoom(roomId, playerId);
 		if (isInRoom) {
 			let roomInfo = _.get(this.rooms, roomId);
 			let oldPlayerInfo = _.get(roomInfo, playerId);
@@ -166,8 +167,9 @@ const RoomService = {
 				// ----  该玩家不在游戏中  -----
 				let isHomeOwner = _.get(oldPlayerInfo, 'isHomeOwner');
 				let data = _.omit(roomInfo, playerId);
-				//清除玩家与房间有关的属性
-				PlayerManager.cleanUserStatus(playerId);
+				// 清除玩家与房间有关的属性
+				// todo 不清除玩家信息，等待下一次重连
+				// PlayerService.cleanUserStatus(playerId);
 				//如果房间只有一个人，直接解散房间,清除房间的数据
 				if (!_.size(data)) {
 					this.disbandRoom(roomId);
@@ -178,13 +180,13 @@ const RoomService = {
 					let ids = _.keys(data);
 					let nextPlayerId = "";
 					for (let i = 0; i < ids.length; i++) {
-						let pos = PlayerManager.getPos(ids[i]);
+						let pos = PlayerService.getPos(ids[i]);
 						if (pos === 1) {
 							nextPlayerId = ids[i];
 							break;
 						}
 					}
-					PlayerManager.setPos(roomId, nextPlayerId, 0);
+					PlayerService.setPos(roomId, nextPlayerId, 0);
 					_.set(this.rooms, `${roomId}.${nextPlayerId}.isHomeOwner`, true);
 				}
 				this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
@@ -194,7 +196,9 @@ const RoomService = {
 				let isHomeOwner = _.get(oldPlayerInfo, 'isHomeOwner');
 				let data = _.omit(roomInfo, playerId);
 				//清除玩家与房间有关的属性
-				PlayerManager.cleanUserStatus(playerId);
+
+				// PlayerService.cleanUserStatus(playerId);
+
 				//如果房间只有一个人，直接解散房间,清除房间的数据
 				if (!_.size(data)) {
 					this.disbandRoom(roomId);
@@ -205,13 +209,13 @@ const RoomService = {
 					let ids = _.keys(data);
 					let nextPlayerId = "";
 					for (let i = 0; i < ids.length; i++) {
-						let pos = PlayerManager.getPos(ids[i]);
+						let pos = PlayerService.getPos(ids[i]);
 						if (pos === 1) {
 							nextPlayerId = ids[i];
 							break;
 						}
 					}
-					PlayerManager.setPos(roomId, nextPlayerId, 0);
+					PlayerService.setPos(roomId, nextPlayerId, 0);
 					_.set(this.rooms, `${roomId}.${nextPlayerId}.isHomeOwner`, true);
 				}
 				this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
@@ -234,6 +238,8 @@ const RoomService = {
 	disbandRoom: function (roomId) {
 		this.rooms = _.omit(this.rooms, roomId);
 		this.roomIds = _.remove(this.roomIds, roomId);
+		// todo 清除该局游戏信息 gameInfo
+		// todo 清除该局玩家信息 playerInfo
 	},
 	
 	/**
@@ -262,7 +268,7 @@ const RoomService = {
 	 * @param playerId
 	 */
 	checkIsLogin: function (playerId) {
-		let isLogin = PlayerManager.getIsLogin(playerId);
+		let isLogin = PlayerService.getIsLogin(playerId);
 		if (!isLogin) { // 未登录
 			return false;
 		} else {
@@ -276,11 +282,11 @@ const RoomService = {
 	 * @param playerId
 	 */
 	checkLoginAndInRoom: function (roomId, playerId) {
-		let isLogin = PlayerManager.getIsLogin(playerId);
+		let isLogin = PlayerService.getIsLogin(playerId);
 		if (!isLogin) { // 未登录
 			return false;
 		}
-		let isInRoom = PlayerManager.isPlayerInRoom(roomId, playerId);
+		let isInRoom = PlayerService.isPlayerInRoom(roomId, playerId);
 		if (isInRoom) {  // 用户已在房间内
 			return false;
 		}
