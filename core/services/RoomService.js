@@ -123,7 +123,6 @@ const RoomService = {
 			let data = _.omit(roomInfo, playerId);
 			//清除个人在房间内的数据,仅保留登录态
 			PlayerService.cleanUserRoomStatus(playerId);
-			PlayerService.cleanUserStatus(playerId)
 			//如果房间只有一个人，直接解散房间,清除房间的数据
 			if (!_.size(data)) {
 				this.disbandRoom(roomId);
