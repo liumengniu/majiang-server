@@ -48,7 +48,8 @@ user.post('/login', async ctx =>{
 			response = Validate.checkSuccess("用户还在房间内", Errors.SUCCESS, HttpStatus.OK, result)
 		} else { //清除用户所有房间状态及登录状态
 			let result = { userInfo, gameServerInfo };
-			if (userInfo && gameServerInfo) {
+			console.log(result, '==========================resultresult=================================================')
+			if (!_.isEmpty(userInfo) && !_.isEmpty(gameServerInfo)) {
 				PlayerService.setIsLogin(playerId,true);
 				response = Validate.checkSuccess("登录成功", Errors.SUCCESS, HttpStatus.OK, result)
 			} else {

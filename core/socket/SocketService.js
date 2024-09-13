@@ -75,7 +75,7 @@ class SocketService{
 			this.onMessageTypeHandle(parseMessage)
 			let roomId = await cacheClient.get('userRoom', parseMessage.data);
 			if (roomId) {
-				let roomInfo = RoomService.rooms[roomId];
+				let roomInfo = RoomService.getRoomInfo(roomId);
 				if (roomInfo?.roomStatus === 2) {
 					this.ws.send(stringify({message:'重连推送', roomInfo,type:'Me'}));
 				} else {

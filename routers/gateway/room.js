@@ -32,14 +32,13 @@ room.post('/createRoom', async ctx =>{
 	try{
 		roomInfo = await RoomService.createRoom(userId);
 		console.log(roomInfo, '+++++++++++++++++++++++++++++++++++++++++++');
-		if(roomInfo){
-			ws.sendToUser(userId,`恭喜创建房间成功，房号${_.get(roomInfo,`${userId}.roomId`)}`,roomInfo, 'create');
+		if(!_.isEmpty(roomInfo)){
+			ws.sendToUser(userId,`恭喜创建房间成功，房号${_.get(roomInfo,`${userId}.roomId`)}`,{roomInfo}, 'create');
 		} else {
-			ws.sendToUser(userId,`恭喜创建房间失败`,roomInfo, 'create');
+			ws.sendToUser(userId,`创建房间失败,请稍后重试`,roomInfo, 'create');
 		}
-		
 	}catch(e){
-		console.log(e,'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+		ws.sendToUser(userId,`创建房间失败,请稍后重试`,roomInfo, 'create');
 	}
 	response = Validate.checkSuccess("创建成功", Errors.SUCCESS, HttpStatus.OK, roomInfo);
 	ctx.body = response;

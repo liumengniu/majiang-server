@@ -38,6 +38,7 @@ const RoomService = {
 	 */
 	createRoom: async function (playerId) {
 		let isLogin = this.checkIsLogin(playerId);
+		console.log(PlayerService.getPlayerInfo(playerId), '======playerIdplayerIdplayerIdplayerIdplayerId===============', PlayerService)
 		if (isLogin) {
 			let roomId = this.createRoomId();
 			this.roomIds.push(roomId);
@@ -54,10 +55,9 @@ const RoomService = {
 			// 设置玩家房间号 和 玩家位置
 			let playerInfo = {pos: 0, roomId,  playerStatus: 2};
 			PlayerService.updatePlayerInfo(playerId, playerInfo);
-			console.log(PlayerService.getPlayerInfo(playerId), '==00000000000000000000000000===', RoomService.getRoomInfo(roomId))
 			return RoomService.getRoomInfo(roomId);
 		} else {
-			return null;
+			throw null
 		}
 	},
 	
@@ -123,11 +123,8 @@ const RoomService = {
 			let oldPlayerInfo = _.get(roomInfo, playerId);
 			let isHomeOwner = _.get(oldPlayerInfo, 'isHomeOwner');
 			let newRoomInfo = _.omit(roomInfo, playerId);
-			this.updateRoomInfo(roomId, this.rooms, newRoomInfo)
-			//清除个人在房间内的数据,仅保留登录态
-			PlayerService.cleanUserRoomStatus(playerId);
 			//如果房间只有一个人，直接解散房间,清除房间的数据
-			if (!_.size(newRoomInfo)) {
+			if (_.size(newRoomInfo) <= 0) {
 				this.disbandRoom(roomId);
 				return;
 			}
@@ -142,6 +139,8 @@ const RoomService = {
 						break;
 					}
 				}
+				//清除个人在房间内的数据,仅保留登录态
+				PlayerService.cleanUserRoomStatus(playerId);
 				PlayerService.setPos(roomId, nextPlayerId, 0);
 				_.set(this.rooms, `${roomId}.${nextPlayerId}.isHomeOwner`, true);
 			}
@@ -239,12 +238,17 @@ const RoomService = {
 	 * @param roomId
 	 */
 	disbandRoom: function (roomId) {
+		const roomInfo = this.getRoomInfo(roomId);
 		this.rooms = _.omit(this.rooms, roomId);
-		this.roomIds = _.remove(this.roomIds, roomId);
-		this.resetGameCollections(roomId)
-		PlayerService.updatePlayerInfo({
-			isLogin: true,
-			playerStatus: 1,
+		this.roomIds = _.filter(this.roomIds, o=> o !== roomId);
+		const keys = _.keys(roomInfo);
+		this.updateGameCollections(roomId, null)
+		this.updateRoomInfo(roomId, this.rooms, null)
+		_.map(keys, k=>{
+			PlayerService.updatePlayerInfo(k, {
+				isLogin: true,
+				playerStatus: 1,
+			})
 		})
 	},
 	
@@ -275,11 +279,7 @@ const RoomService = {
 	 */
 	checkIsLogin: function (playerId) {
 		let isLogin = PlayerService.getIsLogin(playerId);
-		if (!isLogin) { // 未登录
-			return false;
-		} else {
-			return true;
-		}
+		return isLogin
 	},
 	
 	/**
@@ -411,8 +411,12 @@ const RoomService = {
 	 * @returns {*}
 	 */
 	updateRoomInfo(roomId, rooms, data) {
-		let response = _.set(rooms, [roomId], data);
-		return _.cloneDeep(response);
+		if(_.isEmpty(data)){
+			this.rooms = _.omit(rooms, roomId)
+			return this.rooms
+		}
+		_.set(rooms, [roomId], data);
+		return this.rooms;
 	},
 	/**
 	 * 修改房间某个玩家的全部数据
@@ -491,13 +495,6 @@ const RoomService = {
 	},
 
 	/**
-	 * 重置游戏信息
-	 */
-	resetGameCollections(roomId){
-		_.omit(this.gameCollections, roomId)
-	},
-
-	/**
 	 * 获取当前房间的游戏信息
 	 * @param roomId
 	 * @returns {Exclude<GetFieldType<{}, `${string}`>, null | undefined> | {}}
@@ -555,6 +552,10 @@ const RoomService = {
 	 * @returns {{}}
 	 */
 	updateGameCollections: function (roomId, newGameInfo){
+		if(_.isEmpty(newGameInfo)){
+			this.gameCollections = _.omit(this.gameCollections, roomId);
+			return this.gameCollections;
+		}
 		_.set(this.gameCollections, roomId, newGameInfo);
 		return this.gameCollections;
 	}

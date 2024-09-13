@@ -29,10 +29,8 @@ const PlayerService = {
 	 * @param isLogin
 	 */
 	setIsLogin: function (playerId, isLogin) {
-		let info = this.getPlayerInfo(playerId);
-		if (info?.isLogin !== isLogin) {
-			this.updatePlayerInfoDeep("isLogin", playerId, isLogin)
-		}
+		this.updatePlayerInfoDeep("isLogin", playerId, isLogin)
+		console.log(this.playerInfos, '-------setIsLoginsetIsLoginsetIsLoginsetIsLoginsetIsLogin===========')
 	},
 	/**
 	 * 得到登录状态
@@ -65,9 +63,10 @@ const PlayerService = {
 	 * @param data
 	 */
 	updatePlayerInfo: function (playerId, data) {
-		let oldPlayerInfo = this.getPlayerInfo(playerId);
-		let newPlayerInfo = _.assign({}, oldPlayerInfo, data);
-		_.set(this.playerInfos, playerId, newPlayerInfo);
+		// let oldPlayerInfo = this.getPlayerInfo(playerId);
+		// let newPlayerInfo = _.assign({}, oldPlayerInfo, data);
+		_.set(this.playerInfos, playerId, data);
+		console.log(this.playerInfos, '=========this.playerInfos=============')
 		return this.getPlayerInfo(playerId);
 	},
 	/**
@@ -112,7 +111,7 @@ const PlayerService = {
 		if (pos && playerId) {
 			let oldPos = this.getPos(playerId);
 			if (!oldPos) {
-				_.set(this.playerInfos, `${playerId}.pos`, pos || count + 1);
+				_.set(this.playerInfos, `${playerId}.pos`, pos);
 			}
 		}
 	},
