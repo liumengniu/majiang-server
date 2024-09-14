@@ -13,19 +13,22 @@ const RoomService = require("@/core/services/RoomService");
 const PlayerService = require("@/core/services/PlayerService");
 const GameService = require("@/services/game/GameService");
 const SocketApi = require("@socket/SocketApi");
+const GameControl = require("@services/game/GameControl");
 
 class SocketService{
 	constructor(){
 		this.client = new WebSocket.Server({port: 8082});
 		this.ws = null;
-		this._instance = null;
+		this.instance = null;
+		this.isAlive = true;
 	}
-	
-	static getInstance(){
-		if(!this._instance){
-			this._instance = new SocketService();
+
+
+	static getInstance() {
+		if (!this.instance) {
+			this.instance = new SocketService();
 		}
-		return this._instance;
+		return this.instance;
 	}
 	
 	init(){
@@ -38,6 +41,7 @@ class SocketService{
             `);
 		let _this = this;
 		this.client.on('connection', function connection(ws, req) {
+			ws.isAlive = true;
 			let url = _.get(req, 'url');
 			let params = _.split(url, '=');
 			let id = params[1];
@@ -50,95 +54,64 @@ class SocketService{
 			};
 			_this.sendMessage('连接成功');
 			ws.on('message', async function (message) {
-				await _this.onMessageHandle(message.toString(), ws.userId);
+				await _this.onMessageHandle(message.toString(), ws.userId, ws);
 			});
 			ws.on('close', async function(e) {
 				let userId = id || ws.userId;
 				await _this.onCloseHandle(e, userId);
+				clearInterval(interval);
 			});
 			ws.on('error', async function() {
 				await _this.onErrorHandle();
 			});
+			ws.on('pong', _this.heartbeat);
 		})
+		/**
+		 * 心跳检测
+		 * @type {NodeJS.Timeout}
+		 */
+		const interval = setInterval(function ping() {
+			_this.client.clients.forEach(function each(ws) {
+				if (ws.isAlive === false) return ws.terminate();
+				ws.isAlive = false;
+				ws.ping();
+			});
+		}, 30000);
 	}
+
+	/**
+	 * heartbeat方法
+	 */
+	heartbeat() {
+		this.isAlive = true;
+	}
+
 	/**
 	 * 服务端回调操作
 	 * @param message
 	 * @param userId
 	 * @returns {Promise<void>}
 	 */
-	async onMessageHandle(message, userId){
-		if (message === 'HeartBeat') {
-			console.log('心跳反回了吗');
+	async onMessageHandle(message, userId, ws){
+		if (message === 'HeartBeat') { //心跳
+			console.log('=心跳返回ping=');
 			this.sendHeartBeat(userId);
-		} else if(Utils.isJSON(message)) {
+		} else if(Utils.isJSON(message)) {  // API
 			const parseMessage = JSON.parse(_.cloneDeep(message));
-			this.onMessageTypeHandle(parseMessage)
-			let roomId = await cacheClient.get('userRoom', parseMessage.data);
-			if (roomId) {
-				let roomInfo = RoomService.getRoomInfo(roomId);
-				if (roomInfo?.roomStatus === 2) {
-					this.ws.send(stringify({message:'重连推送', roomInfo,type:'Me'}));
-				} else {
-					this.ws.send("房间游戏已结束");//如果要渲染结算界面，可以推送房间信息
-				}
+			if(_.isFunction(GameControl[parseMessage?.type])){
+				GameControl[parseMessage?.type](parseMessage, this)
 			}
+			// let roomId = await cacheClient.get('userRoom', parseMessage.data);
+			// if (roomId) {
+			// 	let roomInfo = RoomService.getRoomInfo(roomId);
+			// 	if (roomInfo?.roomStatus === 2) {
+			// 		this.ws.send(stringify({message:'重连推送', roomInfo,type:'Me'}));
+			// 	} else {
+			// 		this.ws.send("房间游戏已结束");//如果要渲染结算界面，可以推送房间信息
+			// 	}
+			// }
 		} else {
 			console.log(message);
-		}
-	}
-	
-	/**
-	 * websocket回调(根据约定的消息类型)
-	 * @param message
-	 */
-	onMessageTypeHandle(message) {
-		const type = message.type;
-		const data = message?.data;
-		if (type === SocketApi["setUserId"]) {
-			this.ws.userId = message.data;
-			this.sendMessage(stringify({message: '设置成功', data: {userId: message.data}, type: "setUserId"}));
-		} else if (type === SocketApi["startGame"]) {
-			const roomInfo = GameService.startGame(message?.roomId);
-			const gameInfo = RoomService.getGameInfo(message?.roomId)
-			const jsonData = {roomInfo, gameInfo}
-			this.broadcastToRoom(_.keys(roomInfo), `房间${message?.roomId}游戏开始`, jsonData, 'startGame')
-		} else if(type === SocketApi["reconnect"]){  //断线重连，获取全部数据
-			const playerId = data?.userId;
-			const roomId = PlayerService.getRoomId(playerId);
-			const playerInfo = PlayerService.getPlayerInfo(playerId);
-			const gameInfo = RoomService.getGameInfo(roomId)
-			const roomInfo = RoomService.getRoomInfo(roomId);
-			this.sendToUser(playerId, `断线重连成功，继续游戏`, {playerInfo, roomInfo, gameInfo, playerId}, 'reconnect');
-		}else if (type === SocketApi["playCard"]) {
-			// 1.更新服务器数据
-			const roomInfo = GameService.playCard(data?.roomId, data?.cardNum, data?.userId);
-			const gameInfo = RoomService.getGameInfo(data?.roomId)
-			const keys = _.keys(roomInfo);
-			// 2. 新数据推送给相关玩家
-			const jsonData = {roomInfo, gameInfo, cardNum: data?.cardNum, playerId: data?.userId, playCardTime: moment().valueOf()}
-			this.broadcastToRoom(keys, `房间${data?.roomId}玩家出牌`, jsonData, 'playCard')
-			// 3. 检测其他玩家是否需要打出的牌
-			GameService.handleOtherPlayerCard(data.roomId, data.userId, data.cardNum)
-			// 4. 这张牌其他玩家可以处理（碰杠胡），推送给能处理的玩家
-		} else if (type === SocketApi["peng"]) {
-			// 1. 修改游戏数据
-			const roomInfo = GameService.peng(data?.roomId, data.userId, data?.pengArr)
-			const gameInfo = RoomService.getGameInfo(data?.roomId)
-			// 2. 新数据推送给相关玩家
-			const jsonData = {roomInfo,gameInfo, pengArr: data?.pengArr, playerId: data?.userId, playCardTime: moment().valueOf()}
-			this.broadcastToRoom(_.keys(roomInfo), `房间${data?.roomId}玩家${data.userId}开碰`, jsonData, 'peng')
-		} else if (type === SocketApi["gang"]) { //杠牌
-			const roomInfo = GameService.gang(data?.roomId, data.userId, data?.gangArr)
-			const gameInfo = RoomService.getGameInfo(data?.roomId)
-			const jsonData = { roomInfo, gameInfo, gangArr: data?.gangArr,playerId: data?.userId,playCardTime: moment().valueOf() }
-			this.broadcastToRoom(_.keys(roomInfo), `房间${data?.roomId}玩家${data.userId}开杠`, jsonData, 'gang')
-		} else if (type === SocketApi["win"]) { //胡牌
-			const result = GameService.win(data?.roomId, data.userId, data?.cardNum);
-			const jsonData = { result,playerId: data?.userId,playCardTime: moment().valueOf() }
-			this.broadcastToRoom(_.keys(result), `房间${data?.roomId}玩家${data.userId}胡牌`, jsonData, 'winning')
-		} else {
-
 		}
 	}
 

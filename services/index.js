@@ -6,6 +6,3 @@
 
 const UserService = require("@services/user/UserService");
 const GameService = require("@services/game/GameService");
-
-
-export {UserService, GameService}

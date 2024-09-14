@@ -1,7 +1,5 @@
 const models = require("@/models");
 const User = models.User;
-const SocketService = require("@/core/socket/SocketService.js");
-let ws = SocketService.getInstance();
 const {v4: uuidv4} = require('uuid');
 const cacheClient = require("@utils/cacheClient");
 const RoomService = require("@/core/services/RoomService");
@@ -39,30 +37,7 @@ const UserService = {
 		return userInfo;
 	},
 	
-	
-	/**
-	 * 更新战斗规则
-	 * @param data
-	 * @returns {Promise<Model<any, TModelAttributes>>}
-	 */
-	async updateFightRule(data) {
-		let {rule, userId, roomId, roomRule, isHint} = data;
-		console.log(rule, userId, roomId, roomRule, isHint);
-		await User.update({rule, roomRule, isHint}, {where: {id: userId}});
-		if (roomId) {
-			let roomInfo = _.get(RoomService, `rooms.${roomId}`);
-			for (let key in roomInfo) {
-				let item = _.get(roomInfo, key);
-				_.set(roomInfo, `[${key}].roomRule`, roomRule);
-				_.set(roomInfo, `[${key}].isHint`, isHint);
-			}
-			for (let key in roomInfo) {
-				ws.sendToUser(key, '', roomInfo);
-			}
-		}
-		let user = await User.findOne({where: {id: userId}});
-		return user;
-	},
+
 	/**
 	 * 更新设置
 	 * @param data

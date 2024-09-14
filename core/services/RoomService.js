@@ -79,6 +79,7 @@ const RoomService = {
 		if (count >= 4) {
 			throw "房间已满";
 		}
+		console.log("----------------------------");
 		let roomInfo = RoomService.getRoomInfo(roomId);
 		const user = await User.findOne({where: {id: playerId}});
 		let playerCount = this.getPlayerCount(roomId);

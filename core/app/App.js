@@ -20,14 +20,12 @@ const App = {
 	cache: null,                  //系统缓存
 	sequelizes: [],               // 数据库集合
 	client: null,
-	startAllServer: function () {
+	startAllServer: async function () {
 		try {
-			// this.cleanRedis();
-			// this.testRedis();
-			this.initSocket();
-			this.initServer();
-			this.startDoorServer();      // 门服务
-			this.initDB();
+			await this.initSocket();
+			await this.initServer();
+			await this.startDoorServer();      // 门服务
+			await this.initDB();
 		} catch (e) {
 			this.onErrorServer(e);
 		}

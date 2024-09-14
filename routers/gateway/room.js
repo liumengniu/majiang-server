@@ -55,15 +55,15 @@ room.post("/joinRoom", async ctx =>{
 		return;
 	}
 	let roomInfo, gameInfo;
-	try {
-		const res = await RoomService.joinRoom(roomId, userId);
+	try{
+		const res = await RoomService.joinRoom(roomId,userId);
 		roomInfo = res?.roomInfo;
 		gameInfo = res?.gameInfo;
-		for (let k in roomInfo) {
-			ws.sendToUser(_.get(roomInfo, `${k}.id`), `欢迎用户${userId}加入房间${roomId}`, {roomInfo, gameInfo}, 'join');
+		for(let k in roomInfo){
+			ws.sendToUser(_.get(roomInfo,`${k}.id`),`欢迎用户${userId}加入房间${roomId}`,{roomInfo, gameInfo},'join');
 		}
 		response = Validate.checkSuccess("加入成功", Errors.SUCCESS, HttpStatus.OK, roomInfo);
-	} catch (e) {
+	}catch(e){
 		response = Validate.checkSuccess(e, Errors.ROOM_NOT_EXIST, HttpStatus.OK, roomInfo);
 	}
 	ctx.body = response;
@@ -80,9 +80,11 @@ room.post("/quitRoom", async ctx =>{
 		ctx.body = response;
 		return;
 	}
-	let roomInfo;
+	let roomInfo, gameInfo;
 	try{
-		roomInfo = await RoomService.quitRoom(roomId,userId);
+		const res = await RoomService.quitRoom(roomId,userId);
+		roomInfo = res?.roomInfo;
+		gameInfo = res?.gameInfo;
 		for(let k in roomInfo){
 			ws.sendToUser(_.get(roomInfo,`${k}.id`),`用户${userId}已退出房间${roomId}`,roomInfo,'quit');
 		}
