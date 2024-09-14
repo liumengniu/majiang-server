@@ -269,11 +269,12 @@ const GameService = {
 	handleHandCardByMe: function (roomId, playerId){
 		const SocketService = require("../../core/socket/SocketService");
 		const ws = SocketService.getInstance();
-		let roomInfo = _.get(RoomService, `rooms.${roomId}`);
+		let roomInfo = RoomService.getRoomInfo(roomId);
+		const gameInfo = RoomService.getGameInfo(roomId)
 		const keys = _.keys(roomInfo);
 		const newCardNum = RoomService.getNextCard(roomId);
-		const lastCardNum = RoomService.getLastNextCard(roomId);
-		if (typeof newCardNum !== "number" || newCardNum >= lastCardNum) { // 表示牌已摸完，流局
+		if (typeof newCardNum !== "number" || _.toNumber(gameInfo?.activeCardIdx) >= _.toNumber(gameInfo?.lastActiveCardIdx)) { // 表示牌已摸完，流局
+			console.log(gameInfo?.activeCardIdx, '=========newCardNumnewCardNumnewCardNum===', gameInfo?.lastActiveCardIdx)
 			this.flow(roomId, playerId, newCardNum)
 			return
 		}
@@ -282,7 +283,6 @@ const GameService = {
 			if (otherPlayerId === playerId) {
 				nextPlayerId = idx + 1 >= _.size(keys) ? keys[0] : keys[idx + 1];
 			}
-			ws.sendToUser(otherPlayerId, "轮到下家摸牌", 1, "nextHandCard");
 		})
 		// 1. 更新摸牌人的手牌
 		const {newRoomInfo, newCards} = RoomService.updateHandCards(roomId, nextPlayerId, newCardNum)
@@ -381,11 +381,12 @@ const GameService = {
 			}
 			result[key] = {
 				cards: this.adjustHandCards(_.concat([], _.get(value, 'handCards'), key === playerId ? [cardNum] : null)),
-				isWinner: key === playerId,
+				isWinner: null,
+				isFlow: true,
 				gangCount: gangCount,
 				score: gangCount * this.gangScore
 			}
-			ws.sendToUser(key, "流局，无人胜出", 5, "flow");
+			ws.sendToUser(key, "流局，无人胜出", {result}, "flow");
 		})
 		return result;
 	}
