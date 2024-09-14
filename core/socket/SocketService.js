@@ -15,7 +15,6 @@ class SocketService{
 		this.client = new WebSocket.Server({port: 8082});
 		this.ws = null;
 		this.instance = null;
-		this.isAlive = true;
 	}
 
 
@@ -62,7 +61,7 @@ class SocketService{
 			ws.on('pong', _this.heartbeat);
 		})
 		/**
-		 * 心跳检测
+		 * 自动关闭不再存活，无心跳的客户端
 		 * @type {NodeJS.Timeout}
 		 */
 		const interval = setInterval(function ping() {
@@ -75,9 +74,10 @@ class SocketService{
 	}
 
 	/**
-	 * heartbeat方法
+	 * heartbeat回调方法
 	 */
 	heartbeat() {
+		console.log("=========this.isAlive===========")
 		this.isAlive = true;
 	}
 
@@ -88,8 +88,8 @@ class SocketService{
 	 * @returns {Promise<void>}
 	 */
 	async onMessageHandle(message, userId){
-		if (message === 'HeartBeat') { //心跳
-			console.log('=心跳返回ping=');
+		if (message === 'ping') { //心跳
+			console.log('心跳：来自客户端的ping');
 			this.sendHeartBeat(userId);
 		} else if(Utils.isJSON(message)) {  // API
 			const parseMessage = JSON.parse(_.cloneDeep(message));
@@ -133,13 +133,13 @@ class SocketService{
 	}
 	
 	/**
-	 * 心跳检测 - 回传
+	 * 心跳 - 服务端回传
 	 * @param userId
 	 */
 	sendHeartBeat(userId) {
 		this.client.clients.forEach(ws => {
 			if (ws.userId === userId) {
-				ws.send('HeartBeat');
+				ws.send('pong');
 			}
 		})
 	}
