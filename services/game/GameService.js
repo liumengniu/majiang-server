@@ -240,12 +240,13 @@ const GameService = {
 		const SocketService = require("@/core/socket/SocketService");
 		const ws = SocketService.getInstance();
 		let roomInfo = RoomService.getRoomInfo(roomId);
-		const keys = _.keys(roomInfo);
+		let gameInfo = RoomService.getGameInfo(roomId);
+		const tableIds = gameInfo?.tableIds;
 		let isAllPlayerHasOption = false;  // 其他玩家是否可以进行操作
 		let firstOperateId = null;
 		let operateType = null;
 		let msg = "";
-		_.map(keys, (otherPlayerId, idx)=>{
+		_.map(tableIds, (otherPlayerId, idx)=>{
 			let isPlayerOption = false
 			if(otherPlayerId !== playerId){  // 非出牌人
 				const handCards = _.get(roomInfo, `${otherPlayerId}.handCards`, []);
@@ -267,7 +268,6 @@ const GameService = {
 					msg = "可以碰牌";
 				}
 				if(isPlayerOption && !firstOperateId){ //如果是多个玩家可以操作（比如多人都可以碰杠胡），数据更新一次，且操作权限指向第一个可以操作的玩家
-					console.log(idx, '========重新设置位置============', roomInfo,keys)
 					RoomService.updateGameCollectionsDeep(roomId, "optionPos", idx)
 					firstOperateId = otherPlayerId;
 				}
@@ -281,7 +281,6 @@ const GameService = {
 			const gameInfo = RoomService.getGameInfo(roomId)
 			ws.sendToUser(playerId, msg, {operateType, playerId: firstOperateId, gameInfo}, "operate");
 		}
-		console.log(isAllPlayerHasOption, "不允许操作，下发一张牌")
 		return isAllPlayerHasOption;
 	},
 	/**
@@ -291,7 +290,7 @@ const GameService = {
 	 * @param playerId
 	 */
 	handleHandCardByMe: function (roomId, playerId){
-		const SocketService = require("../../core/socket/SocketService");
+		const SocketService = require("@/core/socket/SocketService");
 		const ws = SocketService.getInstance();
 		let roomInfo = RoomService.getRoomInfo(roomId);
 		const gameInfo = RoomService.getGameInfo(roomId)
@@ -310,7 +309,7 @@ const GameService = {
 		// 1. 更新摸牌人的手牌
 		const {newRoomInfo, newCards} = RoomService.updateHandCards(roomId, nextPlayerId, newCardNum)
 		// 2. 发一张牌给下家
-		ws.sendToUser(nextPlayerId, "摸一张牌", {cardNum: newCardNum,roomInfo: newRoomInfo, playerId: nextPlayerId }, "deliverCard");
+		ws.sendToUser(nextPlayerId, "摸一张牌", {cardNum: newCardNum,roomInfo: newRoomInfo, gameInfo,playerId: nextPlayerId }, "deliverCard");
 		// 3. 自摸牌检测
 		const isWinning = this.checkIsWinning(newCards);
 		const sameCard = _.size(_.filter(newCards, h => h%50 === newCardNum%50));
@@ -324,10 +323,10 @@ const GameService = {
 	 * 通过playerId获取位置
 	 */
 	getPosById: function (roomId, playerId) {
-		const roomInfo = RoomService.getRoomInfo(roomId);
-		const keys = _.keys(roomInfo);
+		const gameInfo = RoomService.getGameInfo(roomId);
+		const tableIds = gameInfo?.tableIds;
 		let pos = null;
-		_.map(keys, (key, idx) => {
+		_.map(tableIds, (key, idx) => {
 			if (playerId === key) pos = idx
 		})
 		return pos
@@ -344,6 +343,7 @@ const GameService = {
 		RoomService.updateRoomInfoDeep("handCards", playerId, roomInfo, newHandCards)
 		RoomService.updateRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
 		RoomService.updateGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
+		RoomService.updateGameCollectionsDeep(roomId, "optionPos", this.getPosById(roomId,playerId))
 		return RoomService.getRoomInfo(roomId);
 	},
 	/**
@@ -361,6 +361,7 @@ const GameService = {
 		RoomService.updateRoomInfoDeep("handCards", playerId, roomInfo, finalHandCards)
 		RoomService.updateRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
 		RoomService.updateGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
+		RoomService.updateGameCollectionsDeep(roomId, "optionPos", this.getPosById(roomId,playerId))
 		return RoomService.getRoomInfo(roomId);
 	},
 	/**

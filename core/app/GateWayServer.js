@@ -17,7 +17,6 @@ class GateWayServer{
 	}
 	
 	static getInstance(){
-		console.log(process.pid, '---------------------------------------  process.pid 2222 ----------------------------------');
 		if(!this._instance){
 			this._instance = new GateWayServer();
 		}

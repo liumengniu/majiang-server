@@ -38,7 +38,6 @@ class SocketService{
             `);
 		let _this = this;
 		this.client.on('connection', function connection(ws, req) {
-			console.log(req,"------------------------",ws)
 			let url = _.get(req, 'url');
 			let params = _.split(url, '=');
 			let id = params[1];
@@ -51,7 +50,6 @@ class SocketService{
 			};
 			_this.sendMessage('连接成功');
 			ws.on('message', async function (message) {
-				console.log(message.toString());
 				await _this.onMessageHandle(message.toString(), ws.userId);
 			});
 			ws.on('close', async function(e) {
@@ -70,7 +68,6 @@ class SocketService{
 	 * @returns {Promise<void>}
 	 */
 	async onMessageHandle(message, userId){
-		console.log(message, userId, '-----------==============--------------===============')
 		if (message === 'HeartBeat') {
 			console.log('心跳反回了吗');
 			this.sendHeartBeat(userId);

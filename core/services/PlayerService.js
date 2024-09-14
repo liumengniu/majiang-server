@@ -30,7 +30,6 @@ const PlayerService = {
 	 */
 	setIsLogin: function (playerId, isLogin) {
 		this.updatePlayerInfoDeep("isLogin", playerId, isLogin)
-		console.log(this.playerInfos, '-------setIsLoginsetIsLoginsetIsLoginsetIsLoginsetIsLogin===========')
 	},
 	/**
 	 * 得到登录状态
@@ -66,7 +65,6 @@ const PlayerService = {
 		let oldPlayerInfo = this.getPlayerInfo(playerId);
 		let newPlayerInfo = _.assign({}, oldPlayerInfo, data);
 		_.set(this.playerInfos, playerId, newPlayerInfo);
-		console.log(this.playerInfos, '=========this.playerInfos=============')
 		return this.getPlayerInfo(playerId);
 	},
 	/**
