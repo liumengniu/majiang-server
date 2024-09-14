@@ -1,5 +1,5 @@
 /**
- * websocket相关服务（微信小程序端不兼容socket.io(需要自己额外处理)，这里用websocket）
+ * websocket相关服务（微信小程序端没有默认支持socket.io(需要自己额外处理)，这里用websocket）
  * @author Kevin
  * @Date: 2024-6-18
  */
@@ -13,7 +13,6 @@ const RoomService = require("@/core/services/RoomService");
 const PlayerService = require("@/core/services/PlayerService");
 const GameService = require("@/services/game/GameService");
 const SocketApi = require("@socket/SocketApi");
-
 
 class SocketService{
 	constructor(){
@@ -51,7 +50,6 @@ class SocketService{
 				}
 			};
 			_this.sendMessage('连接成功');
-			
 			ws.on('message', async function (message) {
 				console.log(message.toString());
 				await _this.onMessageHandle(message.toString(), ws.userId);
@@ -65,7 +63,12 @@ class SocketService{
 			});
 		})
 	}
-	//---------------------服务端回调操作--------------------------
+	/**
+	 * 服务端回调操作
+	 * @param message
+	 * @param userId
+	 * @returns {Promise<void>}
+	 */
 	async onMessageHandle(message, userId){
 		console.log(message, userId, '-----------==============--------------===============')
 		if (message === 'HeartBeat') {
@@ -95,7 +98,7 @@ class SocketService{
 	onMessageTypeHandle(message) {
 		const type = message.type;
 		const data = message?.data;
-		if (message.type === SocketApi["setUserId"]) {
+		if (type === SocketApi["setUserId"]) {
 			this.ws.userId = message.data;
 			this.sendMessage(stringify({message: '设置成功', data: {userId: message.data}, type: "setUserId"}));
 		} else if (type === SocketApi["startGame"]) {
@@ -153,8 +156,7 @@ class SocketService{
 			}
 		} else if (type === SocketApi["win"]) { //胡牌
 			const result = GameService.win(data?.roomId, data.userId, data?.cardNum);
-			const roomInfo = GameService.peng(data?.roomId, data.userId, data?.pengArr)
-			for (let k in roomInfo) {
+			for (let k in result) {
 				this.sendToUser(k, `房间${data?.roomId}玩家${data.userId}胡牌`, {
 					result,
 					playerId: data?.userId,
@@ -181,12 +183,18 @@ class SocketService{
 			// PlayerService.cleanUserStatus(userId);
 		}
 	}
-	
+
+	/**
+	 * ws错误异常回调
+	 */
 	onErrorHandle(){
 		console.log("------------------onErrorHandle---------------------")
 	}
 	//---------------------服务端主动操作---------------------
-	//单发消息
+	/**
+	 * 单发消息
+	 * @param data
+	 */
 	sendMessage(data){
 		this.ws.send(data);
 	}
@@ -202,7 +210,13 @@ class SocketService{
 			}
 		})
 	}
-	//单发消息给单个用户
+	/**
+	 * 单发消息给指定用户
+	 * @param userId
+	 * @param message
+	 * @param data
+	 * @param type
+	 */
 	sendToUser(userId, message, data, type) {
 		this.client.clients.forEach(ws => {
 			if (ws.userId === userId) {

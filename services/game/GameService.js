@@ -162,7 +162,7 @@ const GameService = {
 		if(isPlayerOption){
 			return
 		}
-		this.handleHandCardByMe(roomId, playerId, cardNum)
+		this.handleHandCardByMe(roomId, playerId)
 	},
 	/**
 	 * 判断是否可以胡牌
@@ -265,18 +265,16 @@ const GameService = {
 	 * 条件 -> 没有人能碰或者杠，则顺延的下家摸牌（服务端发一张牌给下家）
 	 * @param roomId
 	 * @param playerId
-	 * @param cardNum
 	 */
-	handleHandCardByMe: function (roomId, playerId, cardNum){
+	handleHandCardByMe: function (roomId, playerId){
 		const SocketService = require("../../core/socket/SocketService");
 		const ws = SocketService.getInstance();
 		let roomInfo = _.get(RoomService, `rooms.${roomId}`);
 		const keys = _.keys(roomInfo);
 		const newCardNum = RoomService.getNextCard(roomId);
-		if (!newCardNum) { //返回false，表示牌已摸完，流局
-			_.map(keys, otherPlayerId => {
-				ws.sendToUser(otherPlayerId, "流局，无人胜出", 1, "flow");
-			})
+		const lastCardNum = RoomService.getLastNextCard(roomId);
+		if (typeof newCardNum !== "number" || newCardNum >= lastCardNum) { // 表示牌已摸完，流局
+			this.flow(roomId, playerId, newCardNum)
 			return
 		}
 		let nextPlayerId;
@@ -333,7 +331,7 @@ const GameService = {
 	/**
 	 * 胡牌
 	 * 【结算分数】
-	 * 【杠牌算翻倍】
+	 * 【杠牌算 杠数*10分】
 	 */
 	win: function (roomId, playerId, cardNum) {
 		// cardNum 有数据则是胡别人的牌， cardNum无数据则是自摸胡牌
@@ -356,6 +354,38 @@ const GameService = {
 				gangCount: key === playerId ? gangCount : 0,
 				score: key === playerId ? gangCount * this.gangScore + this.winScore : -(this.winScore)
 			}
+		})
+		return result;
+	},
+	/**
+	 * 流局
+	 * 【结算分数】
+	 * 【杠牌算 杠数*10分】
+	 */
+	flow: function (roomId,playerId, cardNum){
+		const SocketService = require("@/core/socket/SocketService");
+		const ws = SocketService.getInstance();
+		// cardNum 有数据则是胡别人的牌， cardNum无数据则是自摸胡牌
+		const roomInfo = RoomService.getRoomInfo(roomId);
+		let result = {}
+		_.forEach(roomInfo, (value, key) => {
+			const handCards = _.get(roomInfo, `${key}.handCards`);
+			const playedCards = _.get(roomInfo, `${key}.playedCards`);
+			const cards = _.concat([], handCards, playedCards, cardNum);
+			let gangCount = 0;
+			// 检查是否有杠牌
+			for (let i = 0; i < cards.length - 3; i++) {
+				if (cards[i] % 50 === cards[i + 1] % 50 && cards[i] % 50 === cards[i + 2] % 50 && cards[i] % 50 === cards[i + 3] % 50) {
+					gangCount++
+				}
+			}
+			result[key] = {
+				cards: this.adjustHandCards(_.concat([], _.get(value, 'handCards'), key === playerId ? [cardNum] : null)),
+				isWinner: key === playerId,
+				gangCount: gangCount,
+				score: gangCount * this.gangScore
+			}
+			ws.sendToUser(key, "流局，无人胜出", 5, "flow");
 		})
 		return result;
 	}

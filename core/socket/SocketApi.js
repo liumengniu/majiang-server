@@ -23,7 +23,9 @@ const SocketApi = {
 	// 开杠
 	gang: 'gang',
 	// 胡牌
-	win: 'win'
+	win: 'win',
+	// 流局
+	flow: 'flow'
 };
 
 module.exports = SocketApi;
