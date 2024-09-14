@@ -53,33 +53,13 @@ class SocketService{
 			ws.on('close', async function(e) {
 				let userId = id || ws.userId;
 				await _this.onCloseHandle(e, userId);
-				clearInterval(interval);
 			});
 			ws.on('error', async function() {
 				await _this.onErrorHandle();
 			});
-			ws.on('pong', _this.heartbeat);
 		})
-		/**
-		 * 自动关闭不再存活，无心跳的客户端
-		 * @type {NodeJS.Timeout}
-		 */
-		const interval = setInterval(function ping() {
-			_this.client.clients.forEach(function each(ws) {
-				if (ws.isAlive === false) return ws.terminate();
-				ws.isAlive = false;
-				ws.ping();
-			});
-		}, 30000);
 	}
 
-	/**
-	 * heartbeat回调方法
-	 */
-	heartbeat() {
-		console.log("=========this.isAlive===========")
-		this.isAlive = true;
-	}
 
 	/**
 	 * 服务端回调操作
