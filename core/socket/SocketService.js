@@ -49,7 +49,7 @@ class SocketService{
 			};
 			_this.sendMessage('连接成功');
 			ws.on('message', async function (message) {
-				await _this.onMessageHandle(message.toString(), ws.userId, ws);
+				await _this.onMessageHandle(message.toString(), ws.userId);
 			});
 			ws.on('close', async function(e) {
 				let userId = id || ws.userId;
@@ -87,7 +87,7 @@ class SocketService{
 	 * @param userId
 	 * @returns {Promise<void>}
 	 */
-	async onMessageHandle(message, userId, ws){
+	async onMessageHandle(message, userId){
 		if (message === 'HeartBeat') { //心跳
 			console.log('=心跳返回ping=');
 			this.sendHeartBeat(userId);
@@ -96,15 +96,6 @@ class SocketService{
 			if(_.isFunction(GameControl[parseMessage?.type])){
 				GameControl[parseMessage?.type](parseMessage, this)
 			}
-			// let roomId = await cacheClient.get('userRoom', parseMessage.data);
-			// if (roomId) {
-			// 	let roomInfo = RoomService.getRoomInfo(roomId);
-			// 	if (roomInfo?.roomStatus === 2) {
-			// 		this.ws.send(stringify({message:'重连推送', roomInfo,type:'Me'}));
-			// 	} else {
-			// 		this.ws.send("房间游戏已结束");//如果要渲染结算界面，可以推送房间信息
-			// 	}
-			// }
 		} else {
 			console.log(message);
 		}
