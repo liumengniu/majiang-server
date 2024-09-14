@@ -38,7 +38,6 @@ const RoomService = {
 	 */
 	createRoom: async function (playerId) {
 		let isLogin = this.checkIsLogin(playerId);
-		console.log(PlayerService.getPlayerInfo(playerId), '======playerIdplayerIdplayerIdplayerIdplayerId===============', PlayerService)
 		if (isLogin) {
 			let roomId = this.createRoomId();
 			this.roomIds.push(roomId);
@@ -53,9 +52,10 @@ const RoomService = {
 			}]);
 			this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
 			// 设置玩家房间号 和 玩家位置
-			let playerInfo = {pos: 0, roomId,  playerStatus: 2};
+			let playerInfo = {pos: 0, roomId,  playerStatus: 2, isLogin: true};
 			PlayerService.updatePlayerInfo(playerId, playerInfo);
-			return RoomService.getRoomInfo(roomId);
+			this.updateGameCollectionsDeep(roomId, "tableIds", [playerId])
+			return { roomInfo: this.getRoomInfo(roomId), gameInfo: this.getGameInfo(roomId)};
 		} else {
 			throw null
 		}
@@ -72,40 +72,32 @@ const RoomService = {
 		let isLogin = this.checkIsLogin(playerId);
 		if (!isLogin) {
 			throw "用户未登录";
-			return;
 		}
 		if (!isRoomExist) {
 			throw "房间已被解散";
-			return;
 		}
 		if (count >= 4) {
 			throw "房间已满";
-			return;
 		}
 		console.log("----------------------------");
-		let roomInfo = _.get(this.rooms, roomId);
+		let roomInfo = RoomService.getRoomInfo(roomId);
 		const user = await User.findOne({where: {id: playerId}});
 		let playerCount = this.getPlayerCount(roomId);
-		PlayerService.setPos(roomId, playerId, playerCount);
-		let data = _.assign(roomInfo, _.zipObject([playerId], [{
-			id: playerId,
-			roomId: roomId,
-			status: 0,
-			score: 0,
-			isHomeOwner: false,
-			pos: playerCount,
-			optionPos: 0,
-			roomRule: 0,
-			avatar: user.avatar,
-			name: user.name,
-			isHint: true
-		}]));
-		this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
+		PlayerService.updatePlayerInfoDeep("pos", playerId, playerCount)
+		const data = {
+			id: playerId, roomId: roomId, status: 0, score: 0, isHomeOwner: false, pos: playerCount,
+			optionPos: 0, roomRule: 0, avatar: user.avatar, name: user.name, isHint: true
+		}
+		const newRoomInfo = this.updateRoomInfoShallow(playerId, roomInfo, data)
+		this.updateRoomInfo(roomId, this.rooms, newRoomInfo);
 		// 设置玩家房间号 和 玩家位置
 		let playerInfo = {pos: count, roomId, playerStatus: 2};
 		PlayerService.updatePlayerInfo(playerId, playerInfo);
+		let tableIds = this.getGameInfoDeep(roomId, "tableIds") || [];
+		tableIds.push(playerId);
+		this.updateGameCollectionsDeep(roomId, "tableIds", tableIds);
 		// ----- end  -----
-		return _.get(this.rooms, roomId, {});
+		return { roomInfo: this.getRoomInfo(roomId), gameInfo: this.getGameInfo(roomId)};
 	},
 	
 	/**
@@ -308,7 +300,7 @@ const RoomService = {
 		if (!roomId) {
 			return 0;
 		}
-		let roomInfo = _.get(this.rooms, roomId);
+		let roomInfo = this.getRoomInfo(roomId);
 		if (!_.isEmpty(roomInfo)) {
 			count = _.size(roomInfo);
 		}
@@ -426,9 +418,8 @@ const RoomService = {
 	 * @returns {*}
 	 */
 	updateRoomInfoShallow(playerId, roomInfo, data){
-		let response;
-		response = _.set(roomInfo, [playerId], data);
-		return _.cloneDeep(response);
+		_.set(roomInfo, [playerId], data);
+		return roomInfo;
 	},
 	/**
 	 * 修改房间第二层数据
@@ -484,7 +475,9 @@ const RoomService = {
 	 */
 	initGameCollections(roomId, activeCardIdx, cards){
 		let gameCollections = {};
+		const oldGameCollections = this.getGameInfo(roomId)
 		gameCollections[roomId] = {
+			...oldGameCollections,
 			activeCardIdx: _.toNumber(activeCardIdx),
 			lastActiveCardIdx: _.size(cards) - 1,
 			cards,
@@ -501,6 +494,15 @@ const RoomService = {
 	 */
 	getGameInfo: function (roomId){
 		return _.get(this.gameCollections, `${roomId}`, {});
+	},
+	/**
+	 * 获取当前房间的游戏信息某个字段的值
+	 * @param roomId
+	 * @param field
+	 * @returns {*}
+	 */
+	getGameInfoDeep: function (roomId, field){
+		return _.get(this.gameCollections, `${roomId}.${field}`);
 	},
 	/**
 	 * 下发下一张牌
@@ -535,15 +537,17 @@ const RoomService = {
 	 */
 	updateGameCollectionsDeep(roomId, type, data){
 		let gameInfo = this.getGameInfo(roomId)
-		if(_.isArray(data)){
-			_.map(data, o=>{
-				_.set(gameInfo, o?.type, o?.data);
-			})
-		} else {
+		if(_.isArray(data)){  //批量更新
+			if(type === "tableIds") {
+				_.set(gameInfo, type, data);
+			} else {
+				_.map(data, o=>{_.set(gameInfo, o?.type, o?.data);})
+			}
+		} else { //单个字段更新
 			_.set(gameInfo, type, data);
 		}
 		this.updateGameCollections(roomId, gameInfo)
-		return gameInfo;
+		return this.getGameInfo(roomId);
 	},
 	/**
 	 * 更新全部游戏信息

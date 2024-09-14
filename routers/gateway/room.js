@@ -26,13 +26,15 @@ room.post('/createRoom', async ctx =>{
 		ctx.body = response;
 		return;
 	}
-	let roomInfo;
+	let roomInfo, gameInfo;
 	try{
-		roomInfo = await RoomService.createRoom(userId);
-		if(!_.isEmpty(roomInfo)){
-			ws.sendToUser(userId,`恭喜创建房间成功，房号${_.get(roomInfo,`${userId}.roomId`)}`,{roomInfo}, 'create');
+		const res = await RoomService.createRoom(userId);
+		roomInfo = res?.roomInfo;
+		gameInfo = res?.gameInfo;
+		if (!_.isEmpty(roomInfo)) {
+			ws.sendToUser(userId, `恭喜创建房间成功，房号${_.get(roomInfo, `${userId}.roomId`)}`, {roomInfo, gameInfo}, 'create');
 		} else {
-			ws.sendToUser(userId,`创建房间失败,请稍后重试`,roomInfo, 'create');
+			ws.sendToUser(userId, `创建房间失败,请稍后重试`, roomInfo, 'create');
 		}
 	}catch(e){
 		ws.sendToUser(userId,`创建房间失败,请稍后重试`,roomInfo, 'create');
@@ -52,14 +54,16 @@ room.post("/joinRoom", async ctx =>{
 		ctx.body = response;
 		return;
 	}
-	let roomInfo;
-	try{
-		roomInfo = await RoomService.joinRoom(roomId,userId);
-		for(let k in roomInfo){
-			ws.sendToUser(_.get(roomInfo,`${k}.id`),`欢迎用户${userId}加入房间${roomId}`,{roomInfo},'join');
+	let roomInfo, gameInfo;
+	try {
+		const res = await RoomService.joinRoom(roomId, userId);
+		roomInfo = res?.roomInfo;
+		gameInfo = res?.gameInfo;
+		for (let k in roomInfo) {
+			ws.sendToUser(_.get(roomInfo, `${k}.id`), `欢迎用户${userId}加入房间${roomId}`, {roomInfo, gameInfo}, 'join');
 		}
 		response = Validate.checkSuccess("加入成功", Errors.SUCCESS, HttpStatus.OK, roomInfo);
-	}catch(e){
+	} catch (e) {
 		response = Validate.checkSuccess(e, Errors.ROOM_NOT_EXIST, HttpStatus.OK, roomInfo);
 	}
 	ctx.body = response;

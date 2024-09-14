@@ -63,9 +63,9 @@ const PlayerService = {
 	 * @param data
 	 */
 	updatePlayerInfo: function (playerId, data) {
-		// let oldPlayerInfo = this.getPlayerInfo(playerId);
-		// let newPlayerInfo = _.assign({}, oldPlayerInfo, data);
-		_.set(this.playerInfos, playerId, data);
+		let oldPlayerInfo = this.getPlayerInfo(playerId);
+		let newPlayerInfo = _.assign({}, oldPlayerInfo, data);
+		_.set(this.playerInfos, playerId, newPlayerInfo);
 		console.log(this.playerInfos, '=========this.playerInfos=============')
 		return this.getPlayerInfo(playerId);
 	},

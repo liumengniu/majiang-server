@@ -55,7 +55,7 @@ const GameService = {
 	 * 开始游戏
 	 */
 	startGame: function (roomId) {
-		let roomInfo = _.get(RoomService, `rooms.${roomId}`, {});
+		let roomInfo = RoomService.getRoomInfo(roomId);
 		this.gameCards = _.cloneDeep(this.shuffle());
 
 		//生成游戏开始数据
@@ -77,7 +77,8 @@ const GameService = {
 		this.updateRooms(roomId, roomGameInfo);
 		// 开始游戏，并发完手牌后，下一张牌的索引为52
 		this.initGames(roomId, 52, this.gameCards);
-		return roomGameInfo;
+		// return roomGameInfo;
+		return RoomService.getRoomInfo(roomId);
 	},
 	/**
 	 *  获取手牌数据
@@ -128,7 +129,7 @@ const GameService = {
 	 * @param playerId
 	 */
 	playCard: function (roomId, cardNum, playerId){
-		let oldRoomInfo = _.get(RoomService, `rooms.${roomId}`);
+		let oldRoomInfo = RoomService.getRoomInfo(roomId);
 		let oldPlayedCards = _.get(oldRoomInfo, `${playerId}.playedCards`, []);
 		let oldHandCards = _.get(oldRoomInfo, `${playerId}.handCards`, []);
 		oldPlayedCards.push(cardNum);
@@ -140,7 +141,7 @@ const GameService = {
 		RoomService.updateGameCollectionsDeep(roomId, "optionPos", this.getNextPlayerPos(roomId, playerId))
 		RoomService.updateGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		this.updateRooms(roomId, newRoomInfo)
-		return newRoomInfo;
+		return RoomService.getRoomInfo(roomId);
 	},
 	/**
 	 * 获取下一位出牌的玩家（同时其他玩家可以-抢碰、抢杠）
@@ -158,8 +159,8 @@ const GameService = {
 	 * 检测其他人打出的牌（主要是碰和杠）
 	 */
 	handleOtherPlayerCard: function (roomId, playerId, cardNum){
-		const isPlayerOption = this.handleHandCardByOtherPlayerCard(roomId, playerId, cardNum);
-		if(isPlayerOption){
+		const isAllPlayerHasOption = this.handleHandCardByOtherPlayerCard(roomId, playerId, cardNum);
+		if(isAllPlayerHasOption){
 			return
 		}
 		this.handleHandCardByMe(roomId, playerId)
@@ -236,29 +237,52 @@ const GameService = {
 	 * @param cardNum  检测的牌（别人打出或者自摸的牌）
 	 */
 	handleHandCardByOtherPlayerCard: function (roomId, playerId, cardNum){
-		const SocketService = require("../../core/socket/SocketService");
+		const SocketService = require("@/core/socket/SocketService");
 		const ws = SocketService.getInstance();
-		let roomInfo = _.get(RoomService, `rooms.${roomId}`);
+		let roomInfo = RoomService.getRoomInfo(roomId);
 		const keys = _.keys(roomInfo);
-		let isPlayerOption = false;  // 其他玩家是否可以进行操作
-		_.map(_.filter(keys, k => k !== playerId), (otherPlayerId, idx)=>{
-			const handCards = _.get(roomInfo, `${otherPlayerId}.handCards`, []);
-			const sameCard = _.size(_.filter(handCards, h => h%50 === cardNum%50));
-			const cards = _.concat([], handCards, [cardNum]);
-			// 判断是否胡牌
-			const isWinning = this.checkIsWinning(cards)
-			if(isWinning) { // 可以胡
-				isPlayerOption = true;
-				ws.sendToUser(otherPlayerId, "可以胡牌", {operateType: 4, playerId: otherPlayerId}, "operate");
-			} else if(sameCard === 3){  //可以碰
-				isPlayerOption = true;
-				ws.sendToUser(otherPlayerId, "可以杠牌", {operateType: 3, playerId: otherPlayerId}, "operate");
-			} else if(sameCard === 2){  //可以杠
-				isPlayerOption = true;
-				ws.sendToUser(otherPlayerId, "可以碰牌", {operateType: 2, playerId: otherPlayerId}, "operate");
+		let isAllPlayerHasOption = false;  // 其他玩家是否可以进行操作
+		let firstOperateId = null;
+		let operateType = null;
+		let msg = "";
+		_.map(keys, (otherPlayerId, idx)=>{
+			let isPlayerOption = false
+			if(otherPlayerId !== playerId){  // 非出牌人
+				const handCards = _.get(roomInfo, `${otherPlayerId}.handCards`, []);
+				const sameCard = _.size(_.filter(handCards, h => h%50 === cardNum%50));
+				const cards = _.concat([], handCards, [cardNum]);
+				// 判断是否胡牌
+				const isWinning = this.checkIsWinning(cards)
+				if(isWinning) { // 可以胡
+					isAllPlayerHasOption = isPlayerOption = true;
+					operateType = 4;
+					msg = "可以胡牌";
+				} else if(sameCard === 3){  //可以碰
+					isAllPlayerHasOption = isPlayerOption = true;
+					operateType = 3;
+					msg = "可以杠牌";
+				} else if(sameCard === 2){  //可以杠
+					isAllPlayerHasOption = isPlayerOption = true;
+					operateType = 2;
+					msg = "可以碰牌";
+				}
+				if(isPlayerOption && !firstOperateId){ //如果是多个玩家可以操作（比如多人都可以碰杠胡），数据更新一次，且操作权限指向第一个可以操作的玩家
+					console.log(idx, '========重新设置位置============', roomInfo,keys)
+					RoomService.updateGameCollectionsDeep(roomId, "optionPos", idx)
+					firstOperateId = otherPlayerId;
+				}
+				if(isPlayerOption){
+					const gameInfo = RoomService.getGameInfo(roomId)
+					ws.sendToUser(otherPlayerId, msg, {operateType, playerId: otherPlayerId, gameInfo}, "operate");
+				}
 			}
 		})
-		return isPlayerOption;
+		if(isAllPlayerHasOption) {  // 告诉出牌人，其他玩家可以操作，指示灯轮转位置
+			const gameInfo = RoomService.getGameInfo(roomId)
+			ws.sendToUser(playerId, msg, {operateType, playerId: firstOperateId, gameInfo}, "operate");
+		}
+		console.log(isAllPlayerHasOption, "不允许操作，下发一张牌")
+		return isAllPlayerHasOption;
 	},
 	/**
 	 * 自摸牌时检测手牌（服务器下发的牌）
@@ -274,7 +298,6 @@ const GameService = {
 		const keys = _.keys(roomInfo);
 		const newCardNum = RoomService.getNextCard(roomId);
 		if (typeof newCardNum !== "number" || _.toNumber(gameInfo?.activeCardIdx) >= _.toNumber(gameInfo?.lastActiveCardIdx)) { // 表示牌已摸完，流局
-			console.log(gameInfo?.activeCardIdx, '=========newCardNumnewCardNumnewCardNum===', gameInfo?.lastActiveCardIdx)
 			this.flow(roomId, playerId, newCardNum)
 			return
 		}
@@ -296,6 +319,18 @@ const GameService = {
 		} else if(sameCard === 4){
 			ws.sendToUser(nextPlayerId, "自摸杠牌", {operateType: 3, playerId: nextPlayerId}, "operate");
 		}
+	},
+	/**
+	 * 通过playerId获取位置
+	 */
+	getPosById: function (roomId, playerId) {
+		const roomInfo = RoomService.getRoomInfo(roomId);
+		const keys = _.keys(roomInfo);
+		let pos = null;
+		_.map(keys, (key, idx) => {
+			if (playerId === key) pos = idx
+		})
+		return pos
 	},
 	/**
 	 * 开碰

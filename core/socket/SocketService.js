@@ -102,11 +102,10 @@ class SocketService{
 			this.ws.userId = message.data;
 			this.sendMessage(stringify({message: '设置成功', data: {userId: message.data}, type: "setUserId"}));
 		} else if (type === SocketApi["startGame"]) {
-			let roomInfo = GameService.startGame(message?.roomId);
+			const roomInfo = GameService.startGame(message?.roomId);
 			const gameInfo = RoomService.getGameInfo(message?.roomId)
-			for (let k in roomInfo) {
-				this.sendToUser(k, `房间${message?.roomId}游戏开始`, {roomInfo, gameInfo}, 'startGame');
-			}
+			const jsonData = {roomInfo, gameInfo}
+			this.broadcastToRoom(_.keys(roomInfo), `房间${message?.roomId}游戏开始`, jsonData, 'startGame')
 		} else if(type === SocketApi["reconnect"]){  //断线重连，获取全部数据
 			const playerId = data?.userId;
 			const roomId = PlayerService.getRoomId(playerId);
@@ -118,51 +117,29 @@ class SocketService{
 			// 1.更新服务器数据
 			const roomInfo = GameService.playCard(data?.roomId, data?.cardNum, data?.userId);
 			const gameInfo = RoomService.getGameInfo(data?.roomId)
-			console.log("开始推送给", roomInfo)
+			const keys = _.keys(roomInfo);
 			// 2. 新数据推送给相关玩家
-			for (let k in roomInfo) {
-				this.sendToUser(k, `房间${data?.roomId}玩家出牌`, {
-					roomInfo,
-					gameInfo,
-					cardNum: data?.cardNum,
-					playerId: data?.userId,
-					playCardTime: moment().valueOf()
-				}, 'playCard');
-			}
+			const jsonData = {roomInfo, gameInfo, cardNum: data?.cardNum, playerId: data?.userId, playCardTime: moment().valueOf()}
+			this.broadcastToRoom(keys, `房间${data?.roomId}玩家出牌`, jsonData, 'playCard')
 			// 3. 检测其他玩家是否需要打出的牌
 			GameService.handleOtherPlayerCard(data.roomId, data.userId, data.cardNum)
 			// 4. 这张牌其他玩家可以处理（碰杠胡），推送给能处理的玩家
 		} else if (type === SocketApi["peng"]) {
 			// 1. 修改游戏数据
 			const roomInfo = GameService.peng(data?.roomId, data.userId, data?.pengArr)
+			const gameInfo = RoomService.getGameInfo(data?.roomId)
 			// 2. 新数据推送给相关玩家
-			for (let k in roomInfo) {
-				this.sendToUser(k, `房间${data?.roomId}玩家${data.userId}开碰`, {
-					roomInfo: roomInfo,
-					pengArr: data?.pengArr,
-					playerId: data?.userId,
-					playCardTime: moment().valueOf()
-				}, 'peng');
-			}
+			const jsonData = {roomInfo,gameInfo, pengArr: data?.pengArr, playerId: data?.userId, playCardTime: moment().valueOf()}
+			this.broadcastToRoom(_.keys(roomInfo), `房间${data?.roomId}玩家${data.userId}开碰`, jsonData, 'peng')
 		} else if (type === SocketApi["gang"]) { //杠牌
 			const roomInfo = GameService.gang(data?.roomId, data.userId, data?.gangArr)
-			for (let k in roomInfo) {
-				this.sendToUser(k, `房间${data?.roomId}玩家${data.userId}开杠`, {
-					roomInfo: roomInfo,
-					gangArr: data?.gangArr,
-					playerId: data?.userId,
-					playCardTime: moment().valueOf()
-				}, 'gang');
-			}
+			const gameInfo = RoomService.getGameInfo(data?.roomId)
+			const jsonData = { roomInfo, gameInfo, gangArr: data?.gangArr,playerId: data?.userId,playCardTime: moment().valueOf() }
+			this.broadcastToRoom(_.keys(roomInfo), `房间${data?.roomId}玩家${data.userId}开杠`, jsonData, 'gang')
 		} else if (type === SocketApi["win"]) { //胡牌
 			const result = GameService.win(data?.roomId, data.userId, data?.cardNum);
-			for (let k in result) {
-				this.sendToUser(k, `房间${data?.roomId}玩家${data.userId}胡牌`, {
-					result,
-					playerId: data?.userId,
-					playCardTime: moment().valueOf()
-				}, 'winning');
-			}
+			const jsonData = { result,playerId: data?.userId,playCardTime: moment().valueOf() }
+			this.broadcastToRoom(_.keys(result), `房间${data?.roomId}玩家${data.userId}胡牌`, jsonData, 'winning')
 		} else {
 
 		}
@@ -233,19 +210,22 @@ class SocketService{
 	 * @param data
 	 * @param type
 	 */
-	broadcastToRoom(userIds, message,data,type){
+	broadcastToRoom(userIds, message, data, type) {
 		for(let i=0;i<userIds.length;i++){
 			let userId = userIds[i];
 			this.client.clients.forEach(ws => {
 				if (ws.userId === userId) {
-					console.log('推送用户：', this.ws.userId);
 					ws.send(stringify({message, data,type}));
 				}
 			})
 		}
 	}
-	
-	// 通过条件广播给房间内不同玩家
+
+	/**
+	 * 通过条件广播给房间内不同玩家
+	 * @param roomInfo
+	 * @param userId
+	 */
 	sendDifferenceUser(roomInfo, userId) {
 		for(let key in roomInfo){
 			if (key === userId) {
