@@ -5,14 +5,9 @@
  */
 const WebSocket = require('ws');
 const _ = require("lodash");
-const moment = require("moment")
-const cacheClient = require("@/utils/cacheClient");
 const Utils = require("@/utils");
 const stringify = require('fast-json-stable-stringify');
-const RoomService = require("@/core/services/RoomService");
 const PlayerService = require("@/core/services/PlayerService");
-const GameService = require("@/services/game/GameService");
-const SocketApi = require("@socket/SocketApi");
 const GameControl = require("@services/game/GameControl");
 
 class SocketService{
