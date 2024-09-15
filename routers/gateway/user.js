@@ -35,20 +35,18 @@ user.post('/login', async ctx =>{
 		// 获取个人游戏信息
 		let playerId = _.get(userInfo, 'id');
 		let roomId = PlayerService.getRoomId(playerId);
-		console.log(PlayerService, '==============PlayerService===============', RoomService.getRoomInfo(roomId))
 		let playerInfo;
 		if(roomId){  //如果用户在房间内
 			let roomInfo = RoomService.getRoomInfo(roomId);
 			if(!_.isEmpty(roomInfo)){  //且房间还存在
 				playerInfo = PlayerService.getPlayerInfo(playerId);
 			} else{  //房间不存在，同步清除用户的房间信息
-				PlayerService.cleanUserStatus(playerId);
+				PlayerService.cleanUserRoomStatus(playerId);
 			}
-			let result = { userInfo, gameServerInfo,playerInfo };
+			let result = { userInfo, gameServerInfo, playerInfo };
 			response = Validate.checkSuccess("用户还在房间内", Errors.SUCCESS, HttpStatus.OK, result)
 		} else { //清除用户所有房间状态及登录状态
 			let result = { userInfo, gameServerInfo };
-			console.log(result, '==========================resultresult=================================================')
 			if (!_.isEmpty(userInfo) && !_.isEmpty(gameServerInfo)) {
 				PlayerService.setIsLogin(playerId,true);
 				response = Validate.checkSuccess("登录成功", Errors.SUCCESS, HttpStatus.OK, result)

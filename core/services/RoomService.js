@@ -79,7 +79,6 @@ const RoomService = {
 		if (count >= 4) {
 			throw "房间已满";
 		}
-		console.log("----------------------------");
 		let roomInfo = RoomService.getRoomInfo(roomId);
 		const user = await User.findOne({where: {id: playerId}});
 		let playerCount = this.getPlayerCount(roomId);
@@ -152,11 +151,8 @@ const RoomService = {
 		const keys = _.keys(roomInfo);
 		this.updateGameCollections(roomId, null)
 		this.updateRoomInfo(roomId, this.rooms, null)
-		_.map(keys, k=>{
-			PlayerService.updatePlayerInfo(k, {
-				isLogin: true,
-				playerStatus: 1,
-			})
+		_.map(keys, k => {
+			PlayerService.updatePlayerInfo(k, {isLogin: true, playerStatus: 1})
 		})
 	},
 	
