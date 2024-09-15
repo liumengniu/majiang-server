@@ -17,14 +17,20 @@ class SocketService{
 		this.instance = null;
 	}
 
-
+	/**
+	 * 单例
+	 * @returns {SocketService}
+	 */
 	static getInstance() {
 		if (!this.instance) {
 			this.instance = new SocketService();
 		}
 		return this.instance;
 	}
-	
+
+	/**
+	 * 初始化websocket服务
+	 */
 	init(){
 		console.log(`
                 --------------------------------------------------------------------------

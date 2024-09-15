@@ -13,6 +13,8 @@ const stringify = require("fast-json-stable-stringify");
 const GameControl = {
 	/**
 	 * 设置长连接唯一标识
+	 * @param message
+	 * @param ws
 	 */
 	setUserId: function (message, ws) {
 		ws.ws.userId = message.data;
@@ -20,6 +22,8 @@ const GameControl = {
 	},
 	/**
 	 * 开始游戏
+	 * @param message
+	 * @param ws
 	 */
 	startGame: function (message, ws) {
 		const roomInfo = GameService.startGame(message?.roomId);
@@ -30,6 +34,7 @@ const GameControl = {
 	/**
 	 * 断线重连
 	 * @param message
+	 * @param ws
 	 */
 	reconnect: function (message, ws) {
 		const data = message?.data;
@@ -43,6 +48,7 @@ const GameControl = {
 	/**
 	 * 出牌
 	 * @param message
+	 * @param ws
 	 */
 	playCard: function (message, ws) {
 		const data = message?.data;
@@ -60,6 +66,7 @@ const GameControl = {
 	/**
 	 * 碰
 	 * @param message
+	 * @param ws
 	 */
 	peng: function (message, ws){
 		const data = message?.data;
@@ -73,6 +80,7 @@ const GameControl = {
 	/**
 	 * 杠
 	 * @param message
+	 * @param ws
 	 */
 	gang: function (message, ws) {
 		const data = message?.data;
@@ -84,6 +92,7 @@ const GameControl = {
 	/**
 	 * 胡牌
 	 * @param message
+	 * @param ws
 	 */
 	win: function (message, ws){
 		const data = message?.data;

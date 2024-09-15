@@ -1,38 +1,50 @@
 /**
- * 门服务（PS：拆服务实际看用户量，几百几千就没必要了）
+ * 大厅服务（PS：拆服务实际看用户量，几百几千就没必要了）
  * @author Kevin
- * @Date: 2024-6-18
+ * @Date:
  */
 
 const _ = require("lodash");
 const Koa = require("koa");
 const app = new Koa();
-const router = require('@/routers/gateway');
+const hallRouter = require('@/routers/hall');
 const bodyParser = require('koa-bodyparser');
 const appConfig = require("@/config/AppletsConfig")
 
-class GateWayServer{
+class HallServer{
 	constructor(){
 		this._instance = null;
 	}
-	
+
+	/**
+	 * 大厅实例
+	 * @returns {*}
+	 */
 	static getInstance(){
 		if(!this._instance){
-			this._instance = new GateWayServer();
+			this._instance = new HallServer();
 		}
 		return this._instance;
 	}
-	
-	// 初始化
+
+	/**
+	 * 初始化大厅相关服务
+	 * @param protocol
+	 * @param host
+	 * @param port
+	 */
 	init(protocol,host,port){
 		try{
-			this.startDoorServer()
+			this.startHallServer()
 		}catch(e){
 			this.onErrorServer();
 		}
 	}
-	//启动服务
-	startDoorServer(){
+
+	/**
+	 * 启动大厅服务方法
+	 */
+	startHallServer(){
 		app.use(async (ctx, next) => {
 			ctx.set("Access-Control-Allow-Origin", "*");
 			ctx.set('Access-Control-Allow-Methods', 'POST,GET,OPTIONS,PUT,DELETE');
@@ -41,7 +53,7 @@ class GateWayServer{
 			await next();
 		});
 		app.use(bodyParser());
-		app.use(router.routes()).use(router.allowedMethods("*"));
+		app.use(hallRouter.routes()).use(hallRouter.allowedMethods("*"));
 		app.listen(appConfig.port,() =>
 			console.log(`
                 --------------------------------------------------------------------------
@@ -52,17 +64,19 @@ class GateWayServer{
             `)
 		);
 	}
-	//转发
-	
+
+	/**
+	 * 大厅服务启动异常
+	 */
 	onErrorServer(){
 		console.log(`
             --------------------------------------------------------------------------
             
-                                        门服务启动异常
+                                          大厅服务启动异常
             
             --------------------------------------------------------------------------
         `);
 	}
 }
 
-module.exports = GateWayServer;
+module.exports = HallServer
