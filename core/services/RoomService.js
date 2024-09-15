@@ -141,90 +141,6 @@ const RoomService = {
 		return this.getRoomInfo(roomId);
 	},
 	
-	
-	/**
-	 * 掉线操作
-	 * @param roomId
-	 * @param playerId
-	 */
-	disconnect: function (roomId, playerId) {
-		let isInRoom = PlayerService.isPlayerInRoom(roomId, playerId);
-		if (isInRoom) {
-			let roomInfo = _.get(this.rooms, roomId);
-			let oldPlayerInfo = _.get(roomInfo, playerId);
-			// ----  该玩家在游戏中  -----
-			let playerStatus = _.get(oldPlayerInfo, 'status');
-			if (playerStatus === 2) {
-				// ----  该玩家在游戏中  -----
-				// 则什么都不执行
-				//todo --------暂时玩家在游戏中，依然清除全部数据，后期改为断线重连------------
-				// ----  该玩家不在游戏中  -----
-				let isHomeOwner = _.get(oldPlayerInfo, 'isHomeOwner');
-				let data = _.omit(roomInfo, playerId);
-				// 清除玩家与房间有关的属性
-				// todo 不清除玩家信息，等待下一次重连
-				// PlayerService.cleanUserStatus(playerId);
-				//如果房间只有一个人，直接解散房间,清除房间的数据
-				if (!_.size(data)) {
-					this.disbandRoom(roomId);
-					return;
-				}
-				if (isHomeOwner) {
-					// 1、该玩家是房主，房主退房，后面的补位
-					let ids = _.keys(data);
-					let nextPlayerId = "";
-					for (let i = 0; i < ids.length; i++) {
-						let pos = PlayerService.getPos(ids[i]);
-						if (pos === 1) {
-							nextPlayerId = ids[i];
-							break;
-						}
-					}
-					PlayerService.setPos(roomId, nextPlayerId, 0);
-					_.set(this.rooms, `${roomId}.${nextPlayerId}.isHomeOwner`, true);
-				}
-				this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
-				//todo -------------------------  end -------------------------------
-			} else {
-				// ----  该玩家不在游戏中  -----
-				let isHomeOwner = _.get(oldPlayerInfo, 'isHomeOwner');
-				let data = _.omit(roomInfo, playerId);
-				//清除玩家与房间有关的属性
-
-				// PlayerService.cleanUserStatus(playerId);
-
-				//如果房间只有一个人，直接解散房间,清除房间的数据
-				if (!_.size(data)) {
-					this.disbandRoom(roomId);
-					return;
-				}
-				if (isHomeOwner) {
-					// 1、该玩家是房主，房主退房，后面的补位
-					let ids = _.keys(data);
-					let nextPlayerId = "";
-					for (let i = 0; i < ids.length; i++) {
-						let pos = PlayerService.getPos(ids[i]);
-						if (pos === 1) {
-							nextPlayerId = ids[i];
-							break;
-						}
-					}
-					PlayerService.setPos(roomId, nextPlayerId, 0);
-					_.set(this.rooms, `${roomId}.${nextPlayerId}.isHomeOwner`, true);
-				}
-				this.rooms = this.updateRoomInfo(roomId, this.rooms, data);
-			}
-		}
-		//推送给客户端
-		let roomInfo = _.get(this.rooms, roomId);
-		const SocketService = require("../socket/SocketService");
-		const ws = SocketService.getInstance();
-		for (let pid in roomInfo) {
-			ws.sendToUser(pid, `用户${pid}已经退出房间`, roomInfo, 'quit');
-		}
-		return _.get(this.rooms, roomId, {});
-	},
-	
 	/**
 	 * 解散房间
 	 * @param roomId
@@ -261,9 +177,7 @@ const RoomService = {
 	 * 设置房间状态
 	 * @param roomId   (0 房间存在  1 房间已在游戏中 )
 	 */
-	setRoomStatus: function (roomId) {
-
-	},
+	setRoomStatus: function (roomId) {},
 	
 	/**
 	 * 检查登录态
@@ -331,21 +245,7 @@ const RoomService = {
 		}
 		return false;
 	},
-	
-	/**
-	 * 获取房间的游戏规则
-	 * @param roomId
-	 * @param playerId
-	 */
-	getRoomRule: function (roomId, playerId) {
-		let roomInfo = _.get(this.rooms, roomId);
-		let roomRule;
-		for (let key in roomInfo) {
-			roomRule = roomInfo[key].roomRule;
-			break;
-		}
-		return roomRule;
-	},
+
 	
 	/**
 	 * 房间用户准备
@@ -366,7 +266,7 @@ const RoomService = {
 				this.rooms = this.updateRoomInfo(roomId, this.rooms, res);
 			}
 		}
-		return _.get(this.rooms, roomId)
+		return this.getRoomInfo(roomId)
 	},
 	
 	/**

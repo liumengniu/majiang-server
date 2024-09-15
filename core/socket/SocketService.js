@@ -7,7 +7,6 @@ const WebSocket = require('ws');
 const _ = require("lodash");
 const Utils = require("@/utils");
 const stringify = require('fast-json-stable-stringify');
-const PlayerService = require("@/core/services/PlayerService");
 const GameControl = require("@services/game/GameControl");
 
 class SocketService{
@@ -114,12 +113,7 @@ class SocketService{
 	 */
 	async onCloseHandle(e,userId){
 		console.log("------------------onCloseHandle---------------------")
-		let roomId = PlayerService.getRoomId(userId);
-		if(roomId){
-			// RoomService.disconnect(roomId, userId);
-		} else {
-			// PlayerService.cleanUserStatus(userId);
-		}
+		// 不做操作，等待客户断线重连，重连失败，则客户端AI会完成牌局
 	}
 
 	/**
