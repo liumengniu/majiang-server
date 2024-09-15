@@ -63,7 +63,26 @@ class SocketService{
 			ws.on('error', async function() {
 				await _this.onErrorHandle();
 			});
+			ws.on('pong', () => { //收到pong帧，连接正常
+				ws.isAlive = true;
+			});
 		})
+
+		// 定期检查连接的心跳
+		const interval = setInterval(() => {
+			_this.client.clients.forEach(ws => {
+				if (ws.isAlive === false) {
+					return ws.terminate();
+				}
+				ws.isAlive = false;
+				// 发送ping帧检测websocket是否还活着
+				ws.ping();
+			});
+		}, 30000);
+
+		this.client.on('close', () => {
+			clearInterval(interval);
+		});
 	}
 
 
