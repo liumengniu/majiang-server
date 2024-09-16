@@ -310,9 +310,11 @@ const GameService = {
 		})
 		// 1. 更新摸牌人的手牌
 		const {newRoomInfo, newCards} = RoomService.updateHandCards(roomId, nextPlayerId, newCardNum)
-		// 2. 发一张牌给下家
+		// 2. 更新操作人位置为下家（playCard方法已经重置过了，此处为保险）
+		RoomService.updateGameCollectionsDeep(roomId, "optionPos", this.getPosById(roomId,nextPlayerId))
+		// 3. 发一张牌给下家
 		ws.sendToUser(nextPlayerId, "摸一张牌", {cardNum: newCardNum,roomInfo: newRoomInfo, gameInfo,playerId: nextPlayerId }, "deliverCard");
-		// 3. 自摸牌检测
+		// 4. 自摸牌检测
 		const isWinning = this.checkIsWinning(newCards);
 		const sameCard = _.size(_.filter(newCards, h => h%50 === newCardNum%50));
 		gameInfo = RoomService.getGameInfo(roomId)
