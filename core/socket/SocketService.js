@@ -8,6 +8,7 @@ const _ = require("lodash");
 const Utils = require("@/utils");
 const stringify = require('fast-json-stable-stringify');
 const GameControl = require("@services/game/GameControl");
+const HackService = require("@coreServices/HackService");
 
 class SocketService{
 	constructor(){
@@ -153,6 +154,9 @@ class SocketService{
 		this.client.clients.forEach(ws => {
 			if (ws.userId === userId) {
 				console.log(`推送至用户id${ws.userId}的消息`,  message, data, type);
+				if(!_.isEmpty(data.roomInfo)){
+					data.roomInfo = HackService.cleanRoomInfo(data?.roomInfo, userId);
+				}
 				ws.send(stringify({message, data, type}));
 			}
 		})
@@ -170,6 +174,9 @@ class SocketService{
 			let userId = userIds[i];
 			this.client.clients.forEach(ws => {
 				if (ws.userId === userId) {
+					if(!_.isEmpty(data.roomInfo)){
+						data.roomInfo = HackService.cleanRoomInfo(data?.roomInfo, userId);
+					}
 					ws.send(stringify({message, data,type}));
 				}
 			})
