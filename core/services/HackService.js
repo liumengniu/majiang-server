@@ -20,8 +20,7 @@ const HackService = {
 	},
 	/**
 	 * 数据清洗（当前局游戏）
-	 * @param roomInfo
-	 * @param playerId
+	 * @param gameInfo
 	 * @returns {*}
 	 */
 	cleanGameInfo: function (gameInfo){
