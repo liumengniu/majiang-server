@@ -273,13 +273,15 @@ const GameService = {
 				}
 				if(isPlayerOption){
 					const gameInfo = RoomService.getGameInfo(roomId)
-					ws.sendToUser(otherPlayerId, msg, {operateType, playerId: otherPlayerId, gameInfo}, "operate");
+					const roomInfo = RoomService.getRoomInfo(roomId)
+					ws.sendToUser(otherPlayerId, msg, {operateType, playerId: otherPlayerId, gameInfo, roomInfo}, "operate");
 				}
 			}
 		})
 		if(isAllPlayerHasOption) {  // 告诉出牌人，其他玩家可以操作，指示灯轮转位置
 			const gameInfo = RoomService.getGameInfo(roomId)
-			ws.sendToUser(playerId, msg, {operateType, playerId: firstOperateId, gameInfo}, "operate");
+			const roomInfo = RoomService.getRoomInfo(roomId)
+			ws.sendToUser(playerId, msg, {operateType, playerId: firstOperateId, gameInfo, roomInfo}, "operate");
 		}
 		return isAllPlayerHasOption;
 	},
@@ -293,7 +295,7 @@ const GameService = {
 		const SocketService = require("@/core/socket/SocketService");
 		const ws = SocketService.getInstance();
 		let roomInfo = RoomService.getRoomInfo(roomId);
-		const gameInfo = RoomService.getGameInfo(roomId)
+		let gameInfo = RoomService.getGameInfo(roomId)
 		const keys = _.keys(roomInfo);
 		const newCardNum = RoomService.getNextCard(roomId);
 		if (typeof newCardNum !== "number" || _.toNumber(gameInfo?.activeCardIdx) >= _.toNumber(gameInfo?.lastActiveCardIdx)) { // 表示牌已摸完，流局
@@ -313,10 +315,12 @@ const GameService = {
 		// 3. 自摸牌检测
 		const isWinning = this.checkIsWinning(newCards);
 		const sameCard = _.size(_.filter(newCards, h => h%50 === newCardNum%50));
+		gameInfo = RoomService.getGameInfo(roomId)
+		roomInfo = RoomService.getRoomInfo(roomId)
 		if(isWinning){
-			ws.sendToUser(nextPlayerId, "自摸，可以胡牌", {operateType: 4, playerId: nextPlayerId}, "operate");
+			ws.sendToUser(nextPlayerId, "自摸，可以胡牌", {operateType: 4, playerId: nextPlayerId, gameInfo, roomInfo}, "operate");
 		} else if(sameCard === 4){
-			ws.sendToUser(nextPlayerId, "自摸杠牌", {operateType: 3, playerId: nextPlayerId}, "operate");
+			ws.sendToUser(nextPlayerId, "自摸杠牌", {operateType: 3, playerId: nextPlayerId, gameInfo, roomInfo}, "operate");
 		}
 	},
 	/**
@@ -422,6 +426,8 @@ const GameService = {
 				gangCount: gangCount,
 				score: gangCount * this.gangScore
 			}
+		})
+		_.forEach(roomInfo, (value, key) => {
 			ws.sendToUser(key, "流局，无人胜出", {result}, "flow");
 		})
 		return result;

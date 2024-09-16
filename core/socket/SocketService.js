@@ -153,11 +153,13 @@ class SocketService{
 	sendToUser(userId, message, data, type) {
 		this.client.clients.forEach(ws => {
 			if (ws.userId === userId) {
-				console.log(`推送至用户id${ws.userId}的消息`,  message, data, type);
-				if(!_.isEmpty(data.roomInfo)){
-					data.roomInfo = HackService.cleanRoomInfo(data?.roomInfo, userId);
+				let newRoomInfo = {};
+				if (!_.isEmpty(data.roomInfo)) {
+					newRoomInfo = HackService.cleanRoomInfo(_.cloneDeep(data.roomInfo), userId);
 				}
-				ws.send(stringify({message, data, type}));
+				let userData = _.cloneDeep(data);
+				userData.roomInfo = newRoomInfo;
+				ws.send(stringify({message, data: userData, type}));
 			}
 		})
 	}
@@ -170,17 +172,20 @@ class SocketService{
 	 * @param type
 	 */
 	broadcastToRoom(userIds, message, data, type) {
-		for(let i=0;i<userIds.length;i++){
-			let userId = userIds[i];
+		userIds.forEach(userId => {
 			this.client.clients.forEach(ws => {
 				if (ws.userId === userId) {
-					if(!_.isEmpty(data.roomInfo)){
-						data.roomInfo = HackService.cleanRoomInfo(data?.roomInfo, userId);
+					let newRoomInfo = {};
+					if (!_.isEmpty(data.roomInfo)) {
+						newRoomInfo = HackService.cleanRoomInfo(_.cloneDeep(data.roomInfo), userId);
 					}
-					ws.send(stringify({message, data,type}));
+					let userData = _.cloneDeep(data);
+					userData.roomInfo = newRoomInfo;
+					console.log("服务端返回的值", message, userData, type)
+					ws.send(JSON.stringify({ message, data: userData, type }));
 				}
-			})
-		}
+			});
+		});
 	}
 
 	/**
