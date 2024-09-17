@@ -56,12 +56,11 @@ const GameControl = {
 		const roomInfo = GameService.playCard(data?.roomId, data?.cardNum, data?.userId);
 		const gameInfo = RoomService.getGameInfo(data?.roomId)
 		const keys = _.keys(roomInfo);
-		// 2. 新数据推送给相关玩家
+		// 2.新数据推送给相关玩家
 		const jsonData = {roomInfo, gameInfo, cardNum: data?.cardNum, playerId: data?.userId, playCardTime: moment().valueOf()}
 		ws.broadcastToRoom(keys, `房间${data?.roomId}玩家出牌`, jsonData, 'playCard')
 		// 3. 检测其他玩家是否需要打出的牌
 		GameService.handleOtherPlayerCard(data.roomId, data.userId, data.cardNum)
-		// 4. 这张牌其他玩家可以处理（碰杠胡），推送给能处理的玩家
 	},
 	/**
 	 * 碰

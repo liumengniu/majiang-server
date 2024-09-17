@@ -140,6 +140,8 @@ const GameService = {
 		// 更新对局游戏数据
 		RoomService.updateGameCollectionsDeep(roomId, "optionPos", this.getNextPlayerPos(roomId, playerId))
 		RoomService.updateGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
+		RoomService.updateGameCollectionsDeep(roomId, "activeCardNum", cardNum)
+		RoomService.updateGameCollectionsDeep(roomId, "playCardPlayerId", playerId)
 		this.updateRooms(roomId, newRoomInfo)
 		return RoomService.getRoomInfo(roomId);
 	},
@@ -344,10 +346,14 @@ const GameService = {
 		const roomInfo = RoomService.getRoomInfo(roomId);
 		const oldHandCards = _.get(roomInfo, `${playerId}.handCards`);
 		const newHandCards = _.filter(oldHandCards, o=> !_.includes(this.computedCards(pengArr), o%50));
-		const oldPlayedCards = _.get(roomInfo, `${playerId}.playedCards`);
-		const newPlayedCards = _.uniq(_.concat([], oldPlayedCards, pengArr));
 		RoomService.updateRoomInfoDeep("handCards", playerId, roomInfo, newHandCards)
-		RoomService.updateRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
+		// 将当前出牌玩家的牌，放到【开碰】的玩家的数据源中
+		const activeCardNum = RoomService.getGameInfoDeep(roomId, "activeCardNum");
+		const playCardPlayerId = RoomService.getGameInfoDeep(roomId, 'playCardPlayerId');  //上一个出牌的玩家
+		RoomService.updateRoomInfoDeep("handCards", playCardPlayerId, roomInfo, _.filter(roomInfo[playCardPlayerId]?.handCards, o=> o !== activeCardNum))
+		const oldPengCards =  RoomService.getRoomInfoDeep(roomId, playerId,"pengCards") || [];
+		const pengCards = _.concat([],oldPengCards || [], pengArr, [activeCardNum])
+		RoomService.updateRoomInfoDeep("pengCards", playerId, roomInfo, pengCards)
 		RoomService.updateGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		RoomService.updateGameCollectionsDeep(roomId, "optionPos", this.getPosById(roomId,playerId))
 		return RoomService.getRoomInfo(roomId);
@@ -359,13 +365,17 @@ const GameService = {
 		const roomInfo = RoomService.getRoomInfo(roomId);
 		const oldHandCards = _.get(roomInfo, `${playerId}.handCards`);
 		const newHandCards = _.filter(oldHandCards, o=> !_.includes(this.computedCards(gangArr), o%50));
-		const oldPlayedCards = _.get(roomInfo, `${playerId}.playedCards`);
-		const newPlayedCards = _.uniq(_.concat([], oldPlayedCards, gangArr));
 		// 杠完之后，从牌堆最后面下发一张新牌给开杠玩家
 		const cardNum = RoomService.getLastNextCard(roomId);
 		const finalHandCards = this.adjustHandCards(_.concat([], newHandCards, [cardNum]))
 		RoomService.updateRoomInfoDeep("handCards", playerId, roomInfo, finalHandCards)
-		RoomService.updateRoomInfoDeep("playedCards", playerId, roomInfo, newPlayedCards)
+		// 将当前出牌玩家的牌，放到【开碰】的玩家的数据源中
+		const activeCardNum = RoomService.getGameInfoDeep(roomId, "activeCardNum")
+		const playCardPlayerId = RoomService.getGameInfoDeep(roomId, 'playCardPlayerId');  //上一个出牌的玩家
+		RoomService.updateRoomInfoDeep("handCards", playCardPlayerId, roomInfo, _.filter(roomInfo[playCardPlayerId]?.handCards, o=> o !== activeCardNum))
+		const oldGangCards =  RoomService.getRoomInfoDeep(roomId, playerId,"gangCards") || [];
+		const gangCards = _.concat([], oldGangCards, gangArr, [activeCardNum])
+		RoomService.updateRoomInfoDeep("gangCards", playerId, roomInfo, gangCards)
 		RoomService.updateGameCollectionsDeep(roomId, "optionTime", moment().valueOf())
 		RoomService.updateGameCollectionsDeep(roomId, "optionPos", this.getPosById(roomId,playerId))
 		return RoomService.getRoomInfo(roomId);

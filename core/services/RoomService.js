@@ -272,6 +272,16 @@ const RoomService = {
 	getRoomInfo: function (roomId) {
 		return _.get(this.rooms, roomId);
 	},
+
+	/**
+	 * 获取房间内->玩家->某个字段数据
+	 * @param roomId
+	 * @param playerId
+	 * @param field
+	 */
+	getRoomInfoDeep: function (roomId, playerId, field){
+		return _.get(this.rooms, `${roomId}.${playerId}.${field}`);
+	},
 	
 	/**
 	 * 获取房间内用户的数据
