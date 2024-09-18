@@ -312,7 +312,7 @@ const GameService = {
 		})
 		// 1. 更新摸牌人的手牌
 		const {newRoomInfo, newCards} = RoomService.updateHandCards(roomId, nextPlayerId, newCardNum)
-		// 2. 更新操作人位置为下家（playCard方法已经重置过了，此处为保险）
+		// 2. 更新操作人位置为下家（playCard方法已经重置过了，多次重置防止网络波动BUG）
 		RoomService.updateGameCollectionsDeep(roomId, "optionPos", this.getPosById(roomId,nextPlayerId))
 		// 3. 发一张牌给下家
 		ws.sendToUser(nextPlayerId, "摸一张牌", {cardNum: newCardNum,roomInfo: newRoomInfo, gameInfo,playerId: nextPlayerId }, "deliverCard");
@@ -324,6 +324,7 @@ const GameService = {
 		if(isWinning){
 			ws.sendToUser(nextPlayerId, "自摸，可以胡牌", {operateType: 4, playerId: nextPlayerId, gameInfo, roomInfo}, "operate");
 		} else if(sameCard === 4){
+			RoomService.updateGameCollectionsDeep(roomId, "activeCardNum", newCardNum);
 			ws.sendToUser(nextPlayerId, "自摸杠牌", {operateType: 3, playerId: nextPlayerId, gameInfo, roomInfo}, "operate");
 		}
 	},
@@ -350,7 +351,7 @@ const GameService = {
 		// 将当前出牌玩家的牌，放到【开碰】的玩家的数据源中
 		const activeCardNum = RoomService.getGameInfoDeep(roomId, "activeCardNum");
 		const playCardPlayerId = RoomService.getGameInfoDeep(roomId, 'playCardPlayerId');  //上一个出牌的玩家
-		RoomService.updateRoomInfoDeep("handCards", playCardPlayerId, roomInfo, _.filter(roomInfo[playCardPlayerId]?.handCards, o=> o !== activeCardNum))
+		RoomService.updateRoomInfoDeep("playedCards", playCardPlayerId, roomInfo, _.filter(roomInfo[playCardPlayerId]?.playedCards, o=> o !== activeCardNum))
 		const oldPengCards =  RoomService.getRoomInfoDeep(roomId, playerId,"pengCards") || [];
 		const pengCards = _.concat([],oldPengCards || [], pengArr, [activeCardNum])
 		RoomService.updateRoomInfoDeep("pengCards", playerId, roomInfo, pengCards)
@@ -372,7 +373,7 @@ const GameService = {
 		// 将当前出牌玩家的牌，放到【开碰】的玩家的数据源中
 		const activeCardNum = RoomService.getGameInfoDeep(roomId, "activeCardNum")
 		const playCardPlayerId = RoomService.getGameInfoDeep(roomId, 'playCardPlayerId');  //上一个出牌的玩家
-		RoomService.updateRoomInfoDeep("handCards", playCardPlayerId, roomInfo, _.filter(roomInfo[playCardPlayerId]?.handCards, o=> o !== activeCardNum))
+		RoomService.updateRoomInfoDeep("playedCards", playCardPlayerId, roomInfo, _.filter(roomInfo[playCardPlayerId]?.playedCards, o=> o !== activeCardNum))
 		const oldGangCards =  RoomService.getRoomInfoDeep(roomId, playerId,"gangCards") || [];
 		const gangCards = _.concat([], oldGangCards, gangArr, [activeCardNum])
 		RoomService.updateRoomInfoDeep("gangCards", playerId, roomInfo, gangCards)
