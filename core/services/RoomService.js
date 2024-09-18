@@ -387,6 +387,7 @@ const RoomService = {
 			activeCardIdx: _.toNumber(activeCardIdx),
 			lastActiveCardIdx: _.size(cards) - 1,
 			cards,
+			allPlayedCards: [],
 			optionPos: 0,
 			optionTime: moment().valueOf()
 		}
@@ -405,22 +406,22 @@ const RoomService = {
 	 * 获取当前房间的游戏信息某个字段的值
 	 * @param roomId
 	 * @param field
+	 * @param defaultValue
 	 * @returns {*}
 	 */
-	getGameInfoDeep: function (roomId, field){
-		return _.get(this.gameCollections, `${roomId}.${field}`);
+	getGameInfoDeep: function (roomId, field, defaultValue){
+		return _.get(this.gameCollections, `${roomId}.${field}`, defaultValue);
 	},
 	/**
 	 * 下发下一张牌
 	 * @param roomId
 	 */
 	getNextCard(roomId) {
-		const gameInfo = this.getGameInfo(roomId)
-		const oldCards = _.get(gameInfo, `cards`, [])
-		const oldActiveCardIdx = _.get(gameInfo, `activeCardIdx`);
-		let newActiveCardIdx = _.toNumber(oldActiveCardIdx) + 1;
+		const cards = this.getGameInfoDeep(roomId, `cards`, []);
+		const oldActiveCardIdx = this.getGameInfoDeep(roomId, `activeCardIdx`);
+		const newActiveCardIdx = _.toNumber(oldActiveCardIdx) + 1;
 		this.updateGameCollectionsDeep(roomId, "activeCardIdx", newActiveCardIdx)
-		return _.get(oldCards, `${newActiveCardIdx}`);
+		return _.get(cards, `${newActiveCardIdx}`);
 	},
 	/**
 	 * 从牌堆尾部下发下一张牌
