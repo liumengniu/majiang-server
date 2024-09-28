@@ -297,7 +297,8 @@ const GameService = {
 		const SocketService = require("@/core/socket/SocketService");
 		const ws = SocketService.getInstance();
 		let roomInfo = RoomService.getRoomInfo(roomId);
-		let gameInfo = RoomService.getGameInfo(roomId)
+		let gameInfo = RoomService.getGameInfo(roomId);
+		const tableIds = gameInfo?.tableIds || [];
 		const keys = _.keys(roomInfo);
 		const newCardNum = RoomService.getNextCard(roomId);
 		if (typeof newCardNum !== "number" || _.toNumber(gameInfo?.activeCardIdx) >= _.toNumber(gameInfo?.lastActiveCardIdx)) { // 表示牌已摸完，流局
@@ -316,6 +317,8 @@ const GameService = {
 		RoomService.updateGameCollectionsDeep(roomId, "optionPos", this.getPosById(roomId,nextPlayerId))
 		// 3. 发一张牌给下家
 		ws.sendToUser(nextPlayerId, "摸一张牌", {cardNum: newCardNum,roomInfo: newRoomInfo, gameInfo,playerId: nextPlayerId }, "deliverCard");
+		const otherIds = _.filter(tableIds, t=> t !== nextPlayerId);
+		ws.sendDifferenceUser(otherIds, "摸一张牌", {cardNum: null,roomInfo: newRoomInfo, gameInfo,playerId: nextPlayerId }, "deliverCard")
 		// 4. 自摸牌检测
 		const isWinning = this.checkIsWinning(newCards);
 		const sameCard = _.size(_.filter(newCards, h => h%50 === newCardNum%50));

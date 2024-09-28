@@ -381,12 +381,14 @@ const RoomService = {
 	 */
 	initGameCollections(roomId, activeCardIdx, cards){
 		let gameCollections = {};
-		const oldGameCollections = this.getGameInfo(roomId)
+		const oldGameCollections = this.getGameInfo(roomId);
+		const tableIds = this.getGameInfoDeep(roomId, "tableIds", []);
 		gameCollections[roomId] = {
 			...oldGameCollections,
 			activeCardIdx: _.toNumber(activeCardIdx),
 			lastActiveCardIdx: _.size(cards) - 1,
 			cards,
+			remainingNum: _.size(cards) - (tableIds?.length * 13 + 1),
 			allPlayedCards: [],
 			optionPos: 0,
 			optionTime: moment().valueOf()
@@ -419,8 +421,12 @@ const RoomService = {
 	getNextCard(roomId) {
 		const cards = this.getGameInfoDeep(roomId, `cards`, []);
 		const oldActiveCardIdx = this.getGameInfoDeep(roomId, `activeCardIdx`);
+		const oldLastActiveCardIdx =  this.getGameInfoDeep(roomId, `lastActiveCardIdx`); //杠牌玩家从牌堆最后摸的牌的索引
+		const oldRemainingNum = this.getGameInfoDeep(roomId, `remainingNum`, 108 - (_.toNumber(oldActiveCardIdx) + 2) - (107 - _.toNumber(oldLastActiveCardIdx)));
 		const newActiveCardIdx = _.toNumber(oldActiveCardIdx) + 1;
 		this.updateGameCollectionsDeep(roomId, "activeCardIdx", newActiveCardIdx)
+		const remainingNum = oldRemainingNum - 1;
+		this.updateGameCollectionsDeep(roomId, "remainingNum", remainingNum)
 		return _.get(cards, `${newActiveCardIdx}`);
 	},
 	/**
@@ -434,6 +440,9 @@ const RoomService = {
 		const oldLastActiveCardIdx = _.get(gameInfo, `lastActiveCardIdx`);
 		let newLastActiveCardIdx = _.toNumber(oldLastActiveCardIdx) - 1;
 		this.updateGameCollectionsDeep(roomId, "lastActiveCardIdx", newLastActiveCardIdx)
+		const oldActiveCardIdx = this.getGameInfoDeep(roomId, `activeCardIdx`);
+		const remainingNum = 108 - (_.toNumber(oldActiveCardIdx) + 2) - (107 - oldLastActiveCardIdx);
+		this.updateGameCollectionsDeep(roomId, "remainingNum", remainingNum)
 		return _.get(oldCards, `${newLastActiveCardIdx}`);
 	},
 	/**

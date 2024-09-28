@@ -189,18 +189,27 @@ class SocketService{
 	}
 
 	/**
-	 * 通过条件广播给房间内不同玩家
-	 * @param roomInfo
-	 * @param userId
+	 * 通过条件广播给房间内其他玩家
+	 * @param otherIds
+	 * @param message
+	 * @param data
+	 * @param type
 	 */
-	sendDifferenceUser(roomInfo, userId) {
-		for(let key in roomInfo){
-			if (key === userId) {
-				this.ws.sendToUser(userId,'自己操作', roomInfo, 'Me');
-			} else {
-				this.ws.sendToUser(key,'他人操作', roomInfo, 'Other');
-			}
-		}
+	sendDifferenceUser(otherIds, message, data, type) {
+		otherIds.forEach(userId => {
+			this.client.clients.forEach(ws => {
+				if (ws.userId !== userId) {
+					let newRoomInfo = {};
+					if (!_.isEmpty(data.roomInfo)) {
+						newRoomInfo = HackService.cleanRoomInfo(_.cloneDeep(data.roomInfo), userId);
+					}
+					let userData = _.cloneDeep(data);
+					userData.roomInfo = newRoomInfo;
+					console.log("服务端返回的值", message, userData, type)
+					ws.send(JSON.stringify({ message, data: userData, type }));
+				}
+			});
+		});
 	}
 }
 
