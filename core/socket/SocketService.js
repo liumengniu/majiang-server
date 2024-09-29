@@ -9,10 +9,12 @@ const Utils = require("@/utils");
 const stringify = require('fast-json-stable-stringify');
 const GameControl = require("@services/game/GameControl");
 const HackService = require("@coreServices/HackService");
+const appConfig = require("@/config/AppletsConfig")
+const prints = require("@utils/console");
 
 class SocketService{
 	constructor(){
-		this.client = new WebSocket.Server({port: 8082});
+		this.client = new WebSocket.Server({port: appConfig.wssPort});
 		this.ws = null;
 		this.instance = null;
 	}
@@ -32,13 +34,7 @@ class SocketService{
 	 * 初始化websocket服务
 	 */
 	init(){
-		console.log(`
-                --------------------------------------------------------------------------
-
-                                            websocket 服务启动监听
-
-                --------------------------------------------------------------------------
-            `);
+		prints.printBanner(`socket服务器启动，监听${appConfig.wssPort}`);
 		let _this = this;
 		this.client.on('connection', function connection(ws, req) {
 			ws.isAlive = true;
@@ -102,7 +98,7 @@ class SocketService{
 				GameControl[parseMessage?.type](parseMessage, this)
 			}
 		} else {
-			console.log(message);
+
 		}
 	}
 

@@ -10,6 +10,7 @@ const app = new Koa();
 const router = require('@/routers/gateway');
 const bodyParser = require('koa-bodyparser');
 const appConfig = require("@/config/AppletsConfig")
+const prints = require("@utils/console");
 
 class GateWayServer{
 	constructor(){
@@ -42,26 +43,11 @@ class GateWayServer{
 		});
 		app.use(bodyParser());
 		app.use(router.routes()).use(router.allowedMethods("*"));
-		app.listen(appConfig.port,() =>
-			console.log(`
-                --------------------------------------------------------------------------
-                
-                                            门服务器启动
-                
-                --------------------------------------------------------------------------
-            `)
-		);
+		app.listen(appConfig.port,() => prints.printBanner(`门服务器启动，监听${appConfig.port}`));
 	}
-	//转发
-	
+
 	onErrorServer(){
-		console.log(`
-            --------------------------------------------------------------------------
-            
-                                        门服务启动异常
-            
-            --------------------------------------------------------------------------
-        `);
+		prints.printErrorBanner(`门服务启动异常`)
 	}
 }
 

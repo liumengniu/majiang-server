@@ -12,6 +12,9 @@ const SocketService = require("@socket/SocketService");
 //门
 const DoorServer = require("@/core/app/GateWayServer");
 const cacheClient = require("@/utils/CacheClient");
+const HallServer = require("@core/app/HallServer");
+const appConfig = require("@/config/AppletsConfig")
+const prints = require("@utils/console");
 
 const App = {
 	connectServers: [],           //连接服务器的数组
@@ -53,15 +56,7 @@ const App = {
 		app.use(bodyParser());
 		app.use(router.routes()).use(router.allowedMethods("*"));
 		// app.use(accessLogger());         // 服务请求日志
-		app.listen(5000, () =>
-			console.log(`
-                --------------------------------------------------------------------------
-                
-                                            游戏服务器启动,端口5000
-                
-                --------------------------------------------------------------------------
-            `, process.env.NODE_ENV)
-		);
+		app.listen(5000, () => prints.printBanner("游戏主服务启动，监听5000"));
 	},
 	
 	/**
@@ -97,14 +92,7 @@ const App = {
 	},
 	
 	onErrorServer: async function (e) {
-		console.log(e, `
-            --------------------------------------------------------------------------
-            
-                                        服务启动异常
-            
-            --------------------------------------------------------------------------
-        `);
-		
+		prints.printErrorBanner(`游戏主服务启动异常`)
 	}
 };
 

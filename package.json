@@ -16,6 +16,7 @@
   "dependencies": {
     "biguint-format": "^1.0.2",
     "bluebird": "^3.7.2",
+    "chalk": "^4.1.2",
     "fast-json-stable-stringify": "^2.1.0",
     "flake-idgen": "^1.4.0",
     "got": "^14.4.1",
