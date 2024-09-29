@@ -5,3 +5,7 @@ back-end
 *.clinic
 */package-lock.json
 *package-lock.json
+.vitepress/cache/**
+.vitepress/dist
+.vitepress/cache
+.vitepress/cache/deps
