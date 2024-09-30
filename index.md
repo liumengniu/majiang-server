@@ -11,11 +11,8 @@ hero:
       alt: majiang
   actions:
     - theme: brand
-      text: 概念
-      link: /.vitepress/docs/introduction/index
-    - theme: alt
       text: 快速开始
-      link: /.vitepress/docs/getting-started/index
+      link: /.vitepress/docs/introduction/index
 
 features:
   - icon: ⚡️
