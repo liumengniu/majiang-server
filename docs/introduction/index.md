@@ -4,8 +4,8 @@
 
 ## 客户端启动
 1. 下载laya游戏引擎，地址 ![下载地址](https://www.layaair.com/#/engineDownload)
-2. 导入项目 ![img.png](./screenshot/step1.png)
-3. 选择登录场景，启动浏览器或者手机模拟器 ![img.png](./screenshot/step2.png)
+2. 导入项目 ![img.png](../../screenshot/step1.png)
+3. 选择登录场景，启动浏览器或者手机模拟器 ![img.png](../../screenshot/step2.png)
 
 ## 服务端启动
 

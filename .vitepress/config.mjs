@@ -13,10 +13,10 @@ export default defineConfig({
 		logo: 'https://vitepress.dev/vitepress-logo-large.webp',
 		nav: [
 			{text: '首页', link: '/'},
-      {text: '快速开始', link: '/.vitepress/docs/introduction/index'},
+      {text: '快速开始', link: '/docs/introduction/index'},
 		],
 		sidebar: [
-			{text: '快速开始', link: '/.vitepress/docs/introduction/index'},
+			{text: '快速开始', link: '/docs/introduction/index'},
 		],
 
 		socialLinks: [

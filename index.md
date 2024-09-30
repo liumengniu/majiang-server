@@ -12,7 +12,7 @@ hero:
   actions:
     - theme: brand
       text: 快速开始
-      link: /.vitepress/docs/introduction/index
+      link: /docs/introduction/index
 
 features:
   - icon: ⚡️
