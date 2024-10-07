@@ -1,7 +1,7 @@
 # <p align="center">使用Laya引擎开发的麻将游戏服务端</p>
 
 ## 🔥 [客户端仓库地址](https://github.com/liumengniu/majiang)
-## 🔥 [直接上手？](https://github.com/liumengniu/majiang-server)
+## 🔥 [直接上手？文档地址？](https://liumengniu.github.io/majiang-server/)
 
 [//]: # (https://github.com/ikatyang/emoji-cheat-sheet 表情仓库)
 
