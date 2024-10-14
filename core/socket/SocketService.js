@@ -194,7 +194,7 @@ class SocketService{
 	sendDifferenceUser(otherIds, message, data, type) {
 		otherIds.forEach(userId => {
 			this.client.clients.forEach(ws => {
-				if (ws.userId !== userId) {
+				if (ws.userId === userId) {
 					let newRoomInfo = {};
 					if (!_.isEmpty(data.roomInfo)) {
 						newRoomInfo = HackService.cleanRoomInfo(_.cloneDeep(data.roomInfo), userId);
